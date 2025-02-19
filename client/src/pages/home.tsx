@@ -5,6 +5,7 @@ import type { Tower, InsertTower } from "@shared/schema";
 import MapView from "@/components/Map";
 import ControlPanel from "@/components/ControlPanel";
 import { useToast } from "@/hooks/use-toast";
+import { Radio } from "lucide-react";
 
 export default function Home() {
   const [selectedTower, setSelectedTower] = useState<Tower>();
@@ -69,9 +70,24 @@ export default function Home() {
     return <div>Loading...</div>;
   }
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', 'new-tower');
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
   return (
     <div className="flex h-screen">
       <div className="w-1/4 p-4 bg-card overflow-y-auto">
+        <div className="mb-4">
+          <div 
+            draggable 
+            onDragStart={handleDragStart}
+            className="inline-flex items-center gap-2 p-3 bg-primary text-primary-foreground rounded-lg cursor-move hover:opacity-90 transition-opacity"
+          >
+            <Radio className="w-5 h-5" />
+            <span>Drag to add tower</span>
+          </div>
+        </div>
         <ControlPanel tower={selectedTower} onUpdate={handleTowerUpdate} />
       </div>
       <div className="flex-1">

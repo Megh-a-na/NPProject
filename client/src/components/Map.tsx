@@ -15,11 +15,18 @@ interface MapViewProps {
 }
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
-  useMapEvents({
-    dragover: (e: any) => {
+  const map = useMapEvents({
+    dragenter: (e) => {
       e.preventDefault();
     },
-    drop: (e: any) => {
+    dragover: (e) => {
+      e.preventDefault();
+      if (e.originalEvent) {
+        e.originalEvent.dataTransfer.dropEffect = 'copy';
+      }
+    },
+    drop: (e) => {
+      e.preventDefault();
       const { lat, lng } = e.latlng;
       onTowerDrop(lat, lng);
     },
