@@ -58,6 +58,7 @@ export default function Home() {
 
   const handleTowerDrop = async (latitude: number, longitude: number) => {
     try {
+      console.log('Creating tower at:', latitude, longitude);
       const newTower: InsertTower = {
         name: `Tower ${towers.length + 1}`,
         latitude,

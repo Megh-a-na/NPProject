@@ -88,6 +88,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewP
       zoom={4}
       style={{ width: '100%', height: '100%' }}
       scrollWheelZoom={true}
+      droppable={true}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
