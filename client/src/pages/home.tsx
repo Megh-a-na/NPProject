@@ -22,7 +22,16 @@ export default function Home() {
   });
 
   const createTowerMutation = useMutation({
-    mutationFn: async (tower: Partial<Tower>) => {
+    mutationFn: async (tower: {
+      name: string;
+      locality: string;
+      height: number;
+      transmissionPower: number;
+      frequency: number;
+      antennaGain: number;
+      positionX: number;
+      positionY: number;
+    }) => {
       const res = await apiRequest("POST", "/api/towers", tower);
       const data = await res.json() as Tower;
       return data;
@@ -62,12 +71,12 @@ export default function Home() {
       const newTower = {
         name: `Tower ${i + 1}`,
         locality: selectedLocality,
-        height: "30",
-        transmissionPower: "40",
-        frequency: "3500",
-        antennaGain: "15",
-        positionX: ((col + 0.5) / gridSize).toString(),
-        positionY: ((row + 0.5) / gridSize).toString(),
+        height: 30,
+        transmissionPower: 40,
+        frequency: 3500,
+        antennaGain: 15,
+        positionX: (col + 0.5) / gridSize,
+        positionY: (row + 0.5) / gridSize,
       };
 
       createTowerMutation.mutate(newTower);
