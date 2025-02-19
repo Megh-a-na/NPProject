@@ -16,9 +16,6 @@ interface MapViewProps {
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
   const map = useMapEvents({
-    dragenter: (e: any) => {
-      e.preventDefault();
-    },
     dragover: (e: any) => {
       e.preventDefault();
       const dataTransfer = e.originalEvent?.dataTransfer;
@@ -88,7 +85,6 @@ export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewP
       zoom={4}
       style={{ width: '100%', height: '100%' }}
       scrollWheelZoom={true}
-      droppable={true}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
