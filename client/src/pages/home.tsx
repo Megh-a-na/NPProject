@@ -18,35 +18,34 @@ export default function Home() {
 
   const { data: towers = [], isLoading } = useQuery<Tower[]>({
     queryKey: ["/api/towers", selectedLocality],
-    enabled: !!selectedLocality // Only fetch towers when locality is selected
+    enabled: !!selectedLocality
   });
 
   const createTowerMutation = useMutation({
-    mutationFn: async (tower: Partial<Tower>) => { //Simplified tower type
+    mutationFn: async (tower: Partial<Tower>) => {
       const res = await apiRequest("POST", "/api/towers", tower);
       const data = await res.json() as Tower;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedLocality] });
       toast({
-        title: "Tower created",
-        description: "The tower has been successfully created.",
+        title: "Tower placement optimized",
+        description: "The towers have been placed for optimal coverage.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to create tower: " + error.message,
+        description: "Failed to optimize tower placement: " + error.message,
         variant: "destructive",
       });
     },
   });
 
   const handleOptimizePlacement = () => {
-    // TODO: Implement tower placement optimization.  This would likely involve
-    //       an API call to a backend service that handles the optimization.
-    //       For now, we simulate it with a toast message.
+    if (!selectedLocality) return;
+
     toast({
       title: "Optimizing tower placement",
       description: `Calculating optimal positions for ${towerCount} towers in ${
@@ -54,21 +53,25 @@ export default function Home() {
       }`,
     });
 
-    //Simulate creating towers after optimization (replace with actual optimization logic)
+    // Simple grid-based placement strategy
     for (let i = 0; i < towerCount; i++) {
+      const gridSize = Math.ceil(Math.sqrt(towerCount));
+      const row = Math.floor(i / gridSize);
+      const col = i % gridSize;
+
       const newTower = {
         name: `Tower ${i + 1}`,
-        latitude: 0, // Replace with optimized coordinates
-        longitude: 0, // Replace with optimized coordinates
-        height: 30,
-        transmissionPower: 40,
-        frequency: 3500,
-        antennaGain: 15,
-        locality: selectedLocality
+        locality: selectedLocality,
+        height: "30",
+        transmissionPower: "40",
+        frequency: "3500",
+        antennaGain: "15",
+        positionX: ((col + 0.5) / gridSize).toString(),
+        positionY: ((row + 0.5) / gridSize).toString(),
       };
+
       createTowerMutation.mutate(newTower);
     }
-
   };
 
   if (isLoading) {

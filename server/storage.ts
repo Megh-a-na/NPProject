@@ -30,12 +30,13 @@ export class MemStorage implements IStorage {
     const tower: Tower = { 
       id,
       name: insertTower.name,
-      latitude: insertTower.latitude.toString(),
-      longitude: insertTower.longitude.toString(),
+      locality: insertTower.locality,
       height: insertTower.height.toString(),
       transmissionPower: insertTower.transmissionPower.toString(),
       frequency: insertTower.frequency.toString(),
-      antennaGain: insertTower.antennaGain.toString()
+      antennaGain: insertTower.antennaGain.toString(),
+      positionX: insertTower.positionX.toString(),
+      positionY: insertTower.positionY.toString()
     };
     this.towers.set(id, tower);
     return tower;
@@ -49,7 +50,7 @@ export class MemStorage implements IStorage {
       ...existing,
       ...Object.entries(updates).reduce((acc, [key, value]) => ({
         ...acc,
-        [key]: key === 'name' ? value : value?.toString()
+        [key]: key === 'name' || key === 'locality' ? value : value?.toString()
       }), {} as Partial<Tower>)
     };
 

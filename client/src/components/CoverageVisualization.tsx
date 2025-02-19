@@ -57,6 +57,12 @@ export default function CoverageVisualization({ locality, towers }: CoverageVisu
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fill();
+
+      // Draw tower label
+      ctx.fillStyle = '#000';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(tower.name, x, y - 10);
     });
 
   }, [locality, towers]);
