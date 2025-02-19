@@ -74,8 +74,8 @@ function DragOverlay() {
 }
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
-  useMapEvents({
-    drop(e) {
+  const map = useMapEvents({
+    drop(e: any) {
       e.originalEvent.preventDefault();
       const { lat, lng } = e.latlng;
       try {
