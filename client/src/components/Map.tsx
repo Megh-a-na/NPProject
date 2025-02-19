@@ -1,6 +1,6 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { LatLng, DragEvent as LeafletDragEvent } from 'leaflet';
+import { Icon } from 'leaflet';
 import type { Tower } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
@@ -45,23 +45,27 @@ function DragOverlay() {
 
     const handleDragLeave = () => {
       if (markerRef.current) {
-        map.removeLayer(markerRef.current);
+        markerRef.current.remove();
         markerRef.current = null;
       }
     };
 
-    map.getContainer().addEventListener('dragover', handleDragOver);
-    map.getContainer().addEventListener('dragleave', handleDragLeave);
-    map.getContainer().addEventListener('drop', (e) => {
+    const handleDrop = (e: DragEvent) => {
       e.preventDefault();
-    });
+      handleDragLeave();
+    };
+
+    const container = map.getContainer();
+    container.addEventListener('dragover', handleDragOver);
+    container.addEventListener('dragleave', handleDragLeave);
+    container.addEventListener('drop', handleDrop);
 
     return () => {
-      map.getContainer().removeEventListener('dragover', handleDragOver);
-      map.getContainer().removeEventListener('dragleave', handleDragLeave);
-      map.getContainer().removeEventListener('drop', (e) => e.preventDefault());
+      container.removeEventListener('dragover', handleDragOver);
+      container.removeEventListener('dragleave', handleDragLeave);
+      container.removeEventListener('drop', handleDrop);
       if (markerRef.current) {
-        map.removeLayer(markerRef.current);
+        markerRef.current.remove();
       }
     };
   }, [map]);
@@ -70,18 +74,14 @@ function DragOverlay() {
 }
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
-  const map = useMapEvents({
-    dragend(e) {
-      // Handle drag end
-    },
-    dragover(e) {
-      e.originalEvent.preventDefault();
-    },
+  useMapEvents({
     drop(e) {
       e.originalEvent.preventDefault();
       const { lat, lng } = e.latlng;
       try {
-        const data = JSON.parse(e.originalEvent?.dataTransfer?.getData('application/json') || '{}');
+        const data = JSON.parse(
+          e.originalEvent?.dataTransfer?.getData('application/json') || '{}'
+        );
         if (data?.type === 'new-tower') {
           onTowerDrop(lat, lng);
         }

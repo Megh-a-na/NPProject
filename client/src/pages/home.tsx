@@ -78,21 +78,21 @@ export default function Home() {
     updateTowerMutation.mutate({ id: selectedTower.id, ...updates });
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new-tower' }));
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="flex h-screen">
       <div className="w-1/4 p-4 bg-card overflow-y-auto">
         <div className="mb-4">
-          <div 
-            draggable 
+          <div
+            draggable
             onDragStart={handleDragStart}
             className="inline-flex items-center gap-2 p-3 bg-primary text-primary-foreground rounded-lg cursor-move hover:opacity-90 transition-opacity"
           >
