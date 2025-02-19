@@ -3,10 +3,10 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Tower } from '@shared/schema';
 import { INDIAN_LOCALITIES } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
-import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
+import { calculateSignalStrength } from '@/lib/rf-calculations';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import 'leaflet-heatmap';
+import 'leaflet.heat';
 
 interface MapViewProps {
   towers: Tower[];
@@ -25,13 +25,11 @@ function MapController({ locality }: { locality?: string }) {
     const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality);
     if (!localityInfo) return;
 
-    // Calculate bounds of the locality
     const bounds = L.latLngBounds([
       [localityInfo.bounds.south, localityInfo.bounds.west],
       [localityInfo.bounds.north, localityInfo.bounds.east]
     ]);
 
-    // Fit map to these bounds with some padding
     map.fitBounds(bounds, { padding: [50, 50] });
   }, [locality, map]);
 
@@ -80,16 +78,19 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
     const updateHeatmap = () => {
       const bounds = map.getBounds();
       const points = [];
-      const step = 0.002; // Increased step size for better performance
+      const step = 0.002; // Grid step size for heatmap points
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
         for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
-          const signal = calculateCombinedSignalStrength(towers, lat, lng);
-          points.push({
-            lat,
-            lng,
-            value: (signal + 120) / 60
-          });
+          // Calculate signal strength at this point
+          const signalStrengths = towers.map(tower => calculateSignalStrength(tower, lat, lng));
+          const maxSignal = Math.max(...signalStrengths);
+
+          // Normalize signal strength to [0,1] range for heatmap intensity
+          // Assuming signal strength is in dBm, typical range -120 to -50
+          const normalizedIntensity = (maxSignal + 120) / 70;
+
+          points.push([lat, lng, normalizedIntensity]);
         }
       }
 
@@ -97,11 +98,11 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         map.removeLayer(heatmapLayerRef.current);
       }
 
-      // @ts-ignore
-      heatmapLayerRef.current = new L.HeatLayer(points, {
-        radius: 20,
+      heatmapLayerRef.current = L.heatLayer(points, {
+        radius: 25,
         blur: 15,
         maxZoom: 10,
+        max: 1.0,
         gradient: {
           0.4: '#ffffb2',
           0.6: '#fd8d3c',
