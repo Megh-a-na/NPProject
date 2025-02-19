@@ -35,8 +35,8 @@ export class MemStorage implements IStorage {
       transmissionPower: insertTower.transmissionPower.toString(),
       frequency: insertTower.frequency.toString(),
       antennaGain: insertTower.antennaGain.toString(),
-      positionX: insertTower.positionX.toString(),
-      positionY: insertTower.positionY.toString()
+      latitude: insertTower.latitude.toString(),
+      longitude: insertTower.longitude.toString()
     };
     this.towers.set(id, tower);
     return tower;
