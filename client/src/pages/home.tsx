@@ -197,6 +197,7 @@ export default function Home() {
                 onTowerDrop={(lat, lon) => {}}
                 selectedTower={selectedTower}
                 onSelectTower={setSelectedTower}
+                locality={selectedLocality}
               />
             </CardContent>
           </Card>

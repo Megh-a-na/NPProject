@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Tower } from '@shared/schema';
+import { INDIAN_LOCALITIES } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
 import 'leaflet/dist/leaflet.css';
@@ -12,6 +13,29 @@ interface MapViewProps {
   onTowerDrop: (lat: number, lon: number) => void;
   selectedTower?: Tower;
   onSelectTower: (tower: Tower) => void;
+  locality?: string;
+}
+
+function MapController({ locality }: { locality?: string }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!locality) return;
+
+    const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality);
+    if (!localityInfo) return;
+
+    // Calculate bounds of the locality
+    const bounds = L.latLngBounds([
+      [localityInfo.bounds.south, localityInfo.bounds.west],
+      [localityInfo.bounds.north, localityInfo.bounds.east]
+    ]);
+
+    // Fit map to these bounds with some padding
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [locality, map]);
+
+  return null;
 }
 
 function DragHandler({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
@@ -99,11 +123,13 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
   return null;
 }
 
-export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower }: MapViewProps) {
+export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower, locality }: MapViewProps) {
+  const localityInfo = locality ? INDIAN_LOCALITIES.find(l => l.id === locality) : undefined;
+
   return (
     <MapContainer
-      center={[40, -100]}
-      zoom={4}
+      center={localityInfo ? [localityInfo.center.lat, localityInfo.center.lng] : [20.5937, 78.9629]}
+      zoom={localityInfo ? 14 : 4}
       style={{ width: '100%', height: '100%' }}
       scrollWheelZoom={true}
     >
@@ -111,6 +137,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTo
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <MapController locality={locality} />
       <DragHandler onTowerDrop={onTowerDrop} />
       {towers.map((tower) => (
         <TowerMarker
