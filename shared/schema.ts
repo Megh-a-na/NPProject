@@ -5,63 +5,63 @@ import { z } from "zod";
 // Define available localities with their approximate areas and coordinates
 export const INDIAN_LOCALITIES = [
   { 
-    id: "pune_district", 
-    name: "Pune District, Maharashtra", 
-    areaKm2: 15643,
+    id: "pune_city", 
+    name: "Pune City Area, Maharashtra", 
+    areaKm2: 331,
     center: { lat: 18.5204, lng: 73.8567 },
     bounds: {
-      north: 19.2813,
-      south: 17.9921,
-      east: 74.5196,
-      west: 73.2758
+      north: 18.6213,
+      south: 18.4221,
+      east: 73.9696,
+      west: 73.7458
     }
   },
   { 
-    id: "coimbatore_district", 
-    name: "Coimbatore District, Tamil Nadu", 
-    areaKm2: 7469,
+    id: "coimbatore_central", 
+    name: "Coimbatore Central, Tamil Nadu", 
+    areaKm2: 246,
     center: { lat: 11.0168, lng: 76.9558 },
     bounds: {
-      north: 11.3367,
-      south: 10.5065,
-      east: 77.3826,
-      west: 76.5066
+      north: 11.0867,
+      south: 10.9465,
+      east: 77.0326,
+      west: 76.8766
     }
   },
   { 
-    id: "surat_district", 
-    name: "Surat District, Gujarat", 
-    areaKm2: 4418,
+    id: "surat_city", 
+    name: "Surat City Zone, Gujarat", 
+    areaKm2: 326,
     center: { lat: 21.1702, lng: 72.8311 },
     bounds: {
-      north: 21.4834,
-      south: 20.8444,
-      east: 73.2226,
-      west: 72.4954
+      north: 21.2434,
+      south: 21.1144,
+      east: 72.9026,
+      west: 72.7754
     }
   },
   { 
-    id: "lucknow_district", 
-    name: "Lucknow District, Uttar Pradesh", 
-    areaKm2: 2528,
+    id: "lucknow_central", 
+    name: "Lucknow Central Zone, Uttar Pradesh", 
+    areaKm2: 310,
     center: { lat: 26.8467, lng: 80.9462 },
     bounds: {
-      north: 27.0687,
-      south: 26.5967,
-      east: 81.3464,
-      west: 80.5950
+      north: 26.9187,
+      south: 26.7867,
+      east: 81.0164,
+      west: 80.8750
     }
   },
   { 
-    id: "vizag_district", 
-    name: "Visakhapatnam District, Andhra Pradesh", 
-    areaKm2: 11161,
+    id: "vizag_urban", 
+    name: "Visakhapatnam Urban Zone, Andhra Pradesh", 
+    areaKm2: 290,
     center: { lat: 17.6868, lng: 83.2185 },
     bounds: {
-      north: 18.1969,
-      south: 17.1731,
-      east: 83.6804,
-      west: 82.7930
+      north: 17.7569,
+      south: 17.6231,
+      east: 83.3004,
+      west: 83.1530
     }
   }
 ] as const;
