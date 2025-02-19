@@ -2,20 +2,21 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Tower } from "@shared/schema";
-import { INDIAN_LOCALITIES, TOWER_COVERAGE_RADIUS_KM } from "@shared/schema";
+import { INDIAN_LOCALITIES } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import CoverageVisualization from "@/components/CoverageVisualization";
 import { Trash2 } from "lucide-react";
 import { optimizeTowerPlacements } from "@/lib/site-optimization";
+import MapView from "@/components/Map";
 
 export default function Home() {
   const [selectedLocality, setSelectedLocality] = useState<string>();
   const [towerCount, setTowerCount] = useState<number>(1);
+  const [selectedTower, setSelectedTower] = useState<Tower>();
   const { toast } = useToast();
 
   const { data: towers = [], isLoading } = useQuery<Tower[]>({
@@ -56,7 +57,6 @@ export default function Home() {
 
   const clearTowersMutation = useMutation({
     mutationFn: async () => {
-      // Delete all towers in the selected locality
       const promises = towers
         .filter(tower => tower.locality === selectedLocality)
         .map(tower => apiRequest("DELETE", `/api/towers/${tower.id}`));
@@ -187,14 +187,16 @@ export default function Home() {
         </Card>
 
         {selectedLocality && (
-          <Card>
+          <Card className="h-[600px]">
             <CardHeader>
-              <CardTitle>Coverage Visualization</CardTitle>
+              <CardTitle>Coverage Map</CardTitle>
             </CardHeader>
-            <CardContent>
-              <CoverageVisualization
-                locality={INDIAN_LOCALITIES.find(l => l.id === selectedLocality)!}
+            <CardContent className="h-[calc(100%-5rem)]">
+              <MapView
                 towers={towers}
+                onTowerDrop={(lat, lon) => {}}
+                selectedTower={selectedTower}
+                onSelectTower={setSelectedTower}
               />
             </CardContent>
           </Card>
