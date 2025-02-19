@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Tower } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
@@ -20,37 +19,24 @@ function DragHandler({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) 
 
   useEffect(() => {
     const container = map.getContainer();
-
-    const handleDragOver = (e: DragEvent) => {
-      e.preventDefault();
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
-      }
-    };
-
+    const handleDragOver = (e: DragEvent) => e.preventDefault();
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const point = map.containerPointToLatLng([x, y]);
-
+      const point = map.containerPointToLatLng([
+        e.clientX - container.getBoundingClientRect().left,
+        e.clientY - container.getBoundingClientRect().top
+      ]);
       try {
-        const data = e.dataTransfer?.getData('application/json');
-        if (data) {
-          const parsedData = JSON.parse(data);
-          if (parsedData.type === 'new-tower') {
-            onTowerDrop(point.lat, point.lng);
-          }
+        if (e.dataTransfer?.getData('application/json')?.includes('new-tower')) {
+          onTowerDrop(point.lat, point.lng);
         }
       } catch (error) {
-        console.error('Failed to handle tower drop:', error);
+        console.error('Drop error:', error);
       }
     };
 
     container.addEventListener('dragover', handleDragOver);
     container.addEventListener('drop', handleDrop);
-
     return () => {
       container.removeEventListener('dragover', handleDragOver);
       container.removeEventListener('drop', handleDrop);
@@ -67,40 +53,43 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
   useEffect(() => {
     if (!towers.length) return;
 
-    const points = [];
-    const bounds = map.getBounds();
-    const step = 0.001;
+    const updateHeatmap = () => {
+      const bounds = map.getBounds();
+      const points = [];
+      const step = 0.002; // Increased step size for better performance
 
-    for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
-      for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
-        const signal = calculateCombinedSignalStrength(towers, lat, lng);
-        points.push({
-          lat,
-          lng,
-          value: (signal + 120) / 60
-        });
+      for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
+        for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
+          const signal = calculateCombinedSignalStrength(towers, lat, lng);
+          points.push({
+            lat,
+            lng,
+            value: (signal + 120) / 60
+          });
+        }
       }
-    }
 
-    if (heatmapLayerRef.current) {
-      map.removeLayer(heatmapLayerRef.current);
-    }
-
-    // @ts-ignore
-    heatmapLayerRef.current = new L.HeatLayer(points, {
-      radius: 25,
-      blur: 15,
-      maxZoom: 10,
-      gradient: {
-        0.4: '#ffffb2',
-        0.6: '#fd8d3c',
-        0.8: '#f03b20',
-        1.0: '#bd0026'
+      if (heatmapLayerRef.current) {
+        map.removeLayer(heatmapLayerRef.current);
       }
-    });
 
-    heatmapLayerRef.current.addTo(map);
+      // @ts-ignore
+      heatmapLayerRef.current = new L.HeatLayer(points, {
+        radius: 20,
+        blur: 15,
+        maxZoom: 10,
+        gradient: {
+          0.4: '#ffffb2',
+          0.6: '#fd8d3c',
+          0.8: '#f03b20',
+          1.0: '#bd0026'
+        }
+      }).addTo(map);
+    };
+
+    const debouncedUpdate = setTimeout(updateHeatmap, 100);
     return () => {
+      clearTimeout(debouncedUpdate);
       if (heatmapLayerRef.current) {
         map.removeLayer(heatmapLayerRef.current);
       }
