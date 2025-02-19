@@ -78,16 +78,18 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
     const updateHeatmap = () => {
       const bounds = map.getBounds();
       const points = [];
-      const step = 0.003;
+      // Increase step size to reduce point density
+      const step = 0.005;
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
         for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
           const signalStrengths = towers.map(tower => calculateSignalStrength(tower, lat, lng));
           const maxSignal = Math.max(...signalStrengths);
-          const normalizedIntensity = (maxSignal + 120) / 70;
+          // Reduce intensity by normalizing over a larger range
+          const normalizedIntensity = Math.min((maxSignal + 120) / 140, 0.6);
 
-          if (normalizedIntensity > 0.1) {
-            points.push([lat, lng, normalizedIntensity]);
+          if (normalizedIntensity > 0.05) {
+            points.push([lat, lng, normalizedIntensity * 0.5]); // Further reduce intensity
           }
         }
       }
@@ -97,15 +99,15 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
       }
 
       heatmapLayerRef.current = L.heatLayer(points, {
-        radius: 25,
-        blur: 15,
+        radius: 30,            // Increased radius
+        blur: 25,             // Increased blur
         maxZoom: 10,
-        max: 1.0,
-        minOpacity: 0.02,
+        max: 0.6,             // Reduced maximum intensity
+        minOpacity: 0.01,     // Very low minimum opacity
         gradient: {
-          0.0: 'rgba(34, 197, 94, 0.04)',
-          0.5: 'rgba(234, 179, 8, 0.03)',
-          1.0: 'rgba(239, 68, 68, 0.01)'
+          0.0: 'rgba(34, 197, 94, 0.02)',   // Very transparent green
+          0.3: 'rgba(234, 179, 8, 0.015)',  // Almost invisible yellow
+          0.6: 'rgba(239, 68, 68, 0.01)'    // Barely visible red
         }
       }).addTo(map);
     };
