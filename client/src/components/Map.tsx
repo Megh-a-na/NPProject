@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Tower } from '@shared/schema';
-import { INDIAN_LOCALITIES } from '@shared/schema';
+import { DISTRICTS } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateSignalStrength } from '@/lib/rf-calculations';
 import 'leaflet/dist/leaflet.css';
@@ -13,25 +13,31 @@ interface MapViewProps {
   onTowerDrop: (lat: number, lon: number) => void;
   selectedTower?: Tower;
   onSelectTower: (tower: Tower) => void;
-  locality?: string;
+  district?: string;
 }
 
-function MapController({ locality }: { locality?: string }) {
+function MapController({ district }: { district?: string }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!locality) return;
+    if (!district) return;
 
-    const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality);
-    if (!localityInfo) return;
+    const districtInfo = DISTRICTS.find(d => d.id === district);
+    if (!districtInfo) return;
 
-    const bounds = L.latLngBounds([
-      [localityInfo.bounds.south, localityInfo.bounds.west],
-      [localityInfo.bounds.north, localityInfo.bounds.east]
-    ]);
+    // Calculate district bounds from all localities
+    const bounds = districtInfo.localities.reduce<L.LatLngBounds | null>((acc, locality) => {
+      const localBounds = L.latLngBounds(
+        [locality.bounds.south, locality.bounds.west],
+        [locality.bounds.north, locality.bounds.east]
+      );
+      return acc ? acc.extend(localBounds) : localBounds;
+    }, null);
 
-    map.fitBounds(bounds, { padding: [50, 50] });
-  }, [locality, map]);
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [district, map]);
 
   return null;
 }
@@ -70,14 +76,14 @@ function DragHandler({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) 
 
 function CoverageLayer({ towers }: { towers: Tower[] }) {
   const map = useMap();
-  const heatmapLayerRef = useRef<any>(null);
+  const heatmapLayerRef = useRef<L.HeatLayer | null>(null);
 
   useEffect(() => {
     if (!towers.length) return;
 
     const updateHeatmap = () => {
       const bounds = map.getBounds();
-      const points = [];
+      const points: [number, number, number][] = [];
       const step = 0.003;
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
@@ -96,7 +102,7 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         map.removeLayer(heatmapLayerRef.current);
       }
 
-      heatmapLayerRef.current = L.heatLayer(points, {
+      heatmapLayerRef.current = L.heatLayer(points as L.HeatLatLngTuple[], {
         radius: 25,
         blur: 15,
         maxZoom: 10,
@@ -122,13 +128,14 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
   return null;
 }
 
-export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower, locality }: MapViewProps) {
-  const localityInfo = locality ? INDIAN_LOCALITIES.find(l => l.id === locality) : undefined;
+export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower, district }: MapViewProps) {
+  const districtInfo = district ? DISTRICTS.find(d => d.id === district) : undefined;
+  const center = districtInfo?.localities[0]?.center || { lat: 20.5937, lng: 78.9629 };
 
   return (
     <MapContainer
-      center={localityInfo ? [localityInfo.center.lat, localityInfo.center.lng] : [20.5937, 78.9629]}
-      zoom={localityInfo ? 14 : 4}
+      center={[center.lat, center.lng]}
+      zoom={districtInfo ? 12 : 4}
       style={{ width: '100%', height: '100%' }}
       scrollWheelZoom={true}
     >
@@ -136,7 +143,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTo
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapController locality={locality} />
+      <MapController district={district} />
       <DragHandler onTowerDrop={onTowerDrop} />
       {towers.map((tower) => (
         <TowerMarker

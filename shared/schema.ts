@@ -2,87 +2,129 @@ import { pgTable, text, serial, numeric, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Define available localities with their approximate areas and coordinates
-export const INDIAN_LOCALITIES = [
-  { 
-    id: "andheri_west", 
-    name: "Andheri West, Mumbai", 
-    areaKm2: 12.5,
-    center: { lat: 19.1364, lng: 72.8296 },
-    bounds: {
-      north: 19.1584,
-      south: 19.1144,
-      east: 72.8496,
-      west: 72.8096
-    }
+// Define districts and their localities
+export const DISTRICTS = [
+  {
+    id: "mumbai",
+    name: "Mumbai",
+    localities: [
+      {
+        id: "andheri_west",
+        name: "Andheri West",
+        areaKm2: 12.5,
+        center: { lat: 19.1364, lng: 72.8296 },
+        bounds: {
+          north: 19.1584,
+          south: 19.1144,
+          east: 72.8496,
+          west: 72.8096
+        }
+      },
+      {
+        id: "bandra",
+        name: "Bandra",
+        areaKm2: 7.2,
+        center: { lat: 19.0596, lng: 72.8295 },
+        bounds: {
+          north: 19.0696,
+          south: 19.0496,
+          east: 72.8495,
+          west: 72.8095
+        }
+      },
+      {
+        id: "dadar",
+        name: "Dadar",
+        areaKm2: 8.5,
+        center: { lat: 19.0178, lng: 72.8478 },
+        bounds: {
+          north: 19.0278,
+          south: 19.0078,
+          east: 72.8678,
+          west: 72.8278
+        }
+      }
+    ]
   },
-  { 
-    id: "koramangala", 
-    name: "Koramangala, Bangalore", 
-    areaKm2: 7.8,
-    center: { lat: 12.9346, lng: 77.6205 },
-    bounds: {
-      north: 12.9446,
-      south: 12.9246,
-      east: 77.6405,
-      west: 77.6005
-    }
+  {
+    id: "bangalore",
+    name: "Bangalore",
+    localities: [
+      {
+        id: "koramangala",
+        name: "Koramangala",
+        areaKm2: 7.8,
+        center: { lat: 12.9346, lng: 77.6205 },
+        bounds: {
+          north: 12.9446,
+          south: 12.9246,
+          east: 77.6405,
+          west: 77.6005
+        }
+      },
+      {
+        id: "indiranagar",
+        name: "Indiranagar",
+        areaKm2: 5.9,
+        center: { lat: 12.9719, lng: 77.6412 },
+        bounds: {
+          north: 12.9819,
+          south: 12.9619,
+          east: 77.6612,
+          west: 77.6212
+        }
+      }
+    ]
   },
-  { 
-    id: "hauz_khas", 
-    name: "Hauz Khas, Delhi", 
-    areaKm2: 6.2,
-    center: { lat: 28.5494, lng: 77.2001 },
-    bounds: {
-      north: 28.5594,
-      south: 28.5394,
-      east: 77.2201,
-      west: 77.1801
-    }
-  },
-  { 
-    id: "adyar", 
-    name: "Adyar, Chennai", 
-    areaKm2: 9.3,
-    center: { lat: 13.0012, lng: 80.2565 },
-    bounds: {
-      north: 13.0112,
-      south: 12.9912,
-      east: 80.2765,
-      west: 80.2365
-    }
-  },
-  { 
-    id: "banjara_hills", 
-    name: "Banjara Hills, Hyderabad", 
-    areaKm2: 8.9,
-    center: { lat: 17.4156, lng: 78.4347 },
-    bounds: {
-      north: 17.4256,
-      south: 17.4056,
-      east: 78.4547,
-      west: 78.4147
-    }
+  {
+    id: "delhi",
+    name: "Delhi",
+    localities: [
+      {
+        id: "hauz_khas",
+        name: "Hauz Khas",
+        areaKm2: 6.2,
+        center: { lat: 28.5494, lng: 77.2001 },
+        bounds: {
+          north: 28.5594,
+          south: 28.5394,
+          east: 77.2201,
+          west: 77.1801
+        }
+      },
+      {
+        id: "connaught_place",
+        name: "Connaught Place",
+        areaKm2: 4.3,
+        center: { lat: 28.6289, lng: 77.2074 },
+        bounds: {
+          north: 28.6389,
+          south: 28.6189,
+          east: 77.2274,
+          west: 77.1874
+        }
+      }
+    ]
   }
 ] as const;
 
 export const towers = pgTable("towers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  district: text("district").notNull(),
   locality: text("locality").notNull(),
-  // Tower specifications
   height: numeric("height").notNull(),
   transmissionPower: numeric("transmission_power").notNull(),
   frequency: numeric("frequency").notNull(),
   antennaGain: numeric("antenna_gain").notNull(),
-  // Position within locality
   latitude: numeric("latitude").notNull(),
   longitude: numeric("longitude").notNull(),
 });
 
 export const insertTowerSchema = createInsertSchema(towers, {
   name: z.string().min(1, "Name is required"),
-  locality: z.enum(INDIAN_LOCALITIES.map(l => l.id) as [string, ...string[]]),
+  district: z.enum(DISTRICTS.map(d => d.id) as [string, ...string[]]),
+  locality: z.string().min(1, "Locality is required"),
   height: z.number().min(10).max(100),
   transmissionPower: z.number().min(20).max(60),
   frequency: z.number().min(700).max(6000),

@@ -1,4 +1,4 @@
-import { INDIAN_LOCALITIES, type Tower } from "@shared/schema";
+import { DISTRICTS, type Tower } from "@shared/schema";
 
 interface CandidateSite {
   id: number;
@@ -11,7 +11,8 @@ interface CandidateSite {
 }
 
 function generateCandidateSites(locality: string, numSites = 20): CandidateSite[] {
-  const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality)!;
+  // Find the locality info from districts
+  const localityInfo = DISTRICTS.flatMap(d => d.localities).find(l => l.id === locality)!;
   const sites: CandidateSite[] = [];
 
   for (let i = 0; i < numSites; i++) {
