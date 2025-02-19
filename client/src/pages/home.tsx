@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import CoverageVisualization from "@/components/CoverageVisualization";
+import { Trash2 } from "lucide-react";
 
 export default function Home() {
   const [selectedLocality, setSelectedLocality] = useState<string>();
@@ -52,8 +53,30 @@ export default function Home() {
     },
   });
 
-  const handleOptimizePlacement = () => {
+  const clearTowersMutation = useMutation({
+    mutationFn: async () => {
+      // Delete all towers in the selected locality
+      const promises = towers
+        .filter(tower => tower.locality === selectedLocality)
+        .map(tower => apiRequest("DELETE", `/api/towers/${tower.id}`));
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedLocality] });
+      toast({
+        title: "Towers cleared",
+        description: "All towers have been removed from this locality.",
+      });
+    },
+  });
+
+  const handleOptimizePlacement = async () => {
     if (!selectedLocality) return;
+
+    // First clear existing towers
+    if (towers.length > 0) {
+      await clearTowersMutation.mutateAsync();
+    }
 
     toast({
       title: "Optimizing tower placement",
@@ -79,8 +102,12 @@ export default function Home() {
         positionY: (row + 0.5) / gridSize,
       };
 
-      createTowerMutation.mutate(newTower);
+      await createTowerMutation.mutateAsync(newTower);
     }
+  };
+
+  const handleClearTowers = () => {
+    clearTowersMutation.mutate();
   };
 
   if (isLoading) {
@@ -126,13 +153,23 @@ export default function Home() {
               />
             </div>
 
-            <Button 
-              onClick={handleOptimizePlacement}
-              disabled={!selectedLocality}
-              className="w-full"
-            >
-              Optimize Tower Placement
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleOptimizePlacement}
+                disabled={!selectedLocality}
+                className="flex-1"
+              >
+                Optimize Tower Placement
+              </Button>
+              <Button 
+                onClick={handleClearTowers}
+                disabled={!selectedLocality || towers.length === 0}
+                variant="destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear Towers
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
