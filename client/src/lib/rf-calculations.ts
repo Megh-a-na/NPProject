@@ -28,6 +28,23 @@ export function calculateSignalStrength(tower: Tower, lat: number, lon: number):
 
   const pathLoss = calculatePathLoss(tower, distance);
   const signalStrength = Number(tower.transmissionPower) + Number(tower.antennaGain) - pathLoss;
-  
+
   return signalStrength;
+}
+
+// New function to calculate combined signal strength from all towers
+export function calculateCombinedSignalStrength(towers: Tower[], lat: number, lon: number): number {
+  // Convert individual signal powers from dBm to mW
+  const signalPowers = towers.map(tower => {
+    const signalStrengthDBm = calculateSignalStrength(tower, lat, lon);
+    return Math.pow(10, signalStrengthDBm / 10);
+  });
+
+  // Sum up all signal powers
+  const totalPowerMw = signalPowers.reduce((sum, power) => sum + power, 0);
+
+  // Convert back to dBm
+  const totalPowerDBm = 10 * Math.log10(totalPowerMw);
+
+  return totalPowerDBm;
 }

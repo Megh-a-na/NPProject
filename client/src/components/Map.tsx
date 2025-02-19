@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { LatLng } from 'leaflet';
 import type { Tower } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
-import { calculateSignalStrength } from '@/lib/rf-calculations';
+import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet-heatmap';
@@ -84,11 +84,11 @@ function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) =>
   return null;
 }
 
-function CoverageLayer({ tower }: { tower: Tower }) {
+function CoverageLayer({ towers }: { towers: Tower[] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!tower) return;
+    if (!towers.length) return;
 
     const points = [];
     const bounds = map.getBounds();
@@ -96,7 +96,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
 
     for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
       for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
-        const signal = calculateSignalStrength(tower, lat, lng);
+        const signal = calculateCombinedSignalStrength(towers, lat, lng);
         points.push({
           lat,
           lng,
@@ -113,7 +113,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
       gradient: {
         0.4: '#ffffb2',
         0.6: '#fd8d3c',
-        0.8: '#fd8d3c',
+        0.8: '#f03b20',
         1.0: '#bd0026'
       }
     });
@@ -122,7 +122,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
     return () => {
       map.removeLayer(heatmapLayer);
     };
-  }, [tower, map]);
+  }, [towers, map]);
 
   return null;
 }
@@ -149,7 +149,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTo
           onClick={() => onSelectTower(tower)}
         />
       ))}
-      {selectedTower && <CoverageLayer tower={selectedTower} />}
+      <CoverageLayer towers={towers} />
     </MapContainer>
   );
 }
