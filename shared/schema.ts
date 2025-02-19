@@ -5,63 +5,63 @@ import { z } from "zod";
 // Define available localities with their approximate areas and coordinates
 export const INDIAN_LOCALITIES = [
   { 
-    id: "andheri", 
-    name: "Andheri, Mumbai", 
-    areaKm2: 25,
-    center: { lat: 19.1136, lng: 72.8697 },
+    id: "mumbai", 
+    name: "Mumbai Metropolitan", 
+    areaKm2: 603,
+    center: { lat: 19.0760, lng: 72.8777 },
     bounds: {
-      north: 19.1236,
-      south: 19.1036,
-      east: 72.8797,
-      west: 72.8597
+      north: 19.2813,
+      south: 18.8921,
+      east: 73.0196,
+      west: 72.7758
     }
   },
   { 
-    id: "whitefield", 
-    name: "Whitefield, Bangalore", 
-    areaKm2: 18,
-    center: { lat: 12.9698, lng: 77.7499 },
+    id: "bangalore", 
+    name: "Bangalore City", 
+    areaKm2: 741,
+    center: { lat: 12.9716, lng: 77.5946 },
     bounds: {
-      north: 12.9798,
-      south: 12.9598,
-      east: 77.7599,
-      west: 77.7399
+      north: 13.1367,
+      south: 12.8065,
+      east: 77.7826,
+      west: 77.4066
     }
   },
   { 
-    id: "gurgaon", 
-    name: "Gurgaon, Delhi NCR", 
-    areaKm2: 30,
-    center: { lat: 28.4595, lng: 77.0266 },
+    id: "delhi", 
+    name: "Delhi NCR", 
+    areaKm2: 1484,
+    center: { lat: 28.6139, lng: 77.2090 },
     bounds: {
-      north: 28.4695,
-      south: 28.4495,
-      east: 77.0366,
-      west: 77.0166
+      north: 28.8834,
+      south: 28.3444,
+      east: 77.5226,
+      west: 76.8954
     }
   },
   { 
-    id: "salt_lake", 
-    name: "Salt Lake City, Kolkata", 
-    areaKm2: 12,
-    center: { lat: 22.5806, lng: 88.4089 },
+    id: "chennai", 
+    name: "Chennai City", 
+    areaKm2: 426,
+    center: { lat: 13.0827, lng: 80.2707 },
     bounds: {
-      north: 22.5906,
-      south: 22.5706,
-      east: 88.4189,
-      west: 88.3989
+      north: 13.2687,
+      south: 12.8967,
+      east: 80.3464,
+      west: 80.1950
     }
   },
   { 
-    id: "hitech_city", 
-    name: "HITEC City, Hyderabad", 
-    areaKm2: 20,
-    center: { lat: 17.4435, lng: 78.3772 },
+    id: "hyderabad", 
+    name: "Hyderabad City", 
+    areaKm2: 650,
+    center: { lat: 17.3850, lng: 78.4867 },
     bounds: {
-      north: 17.4535,
-      south: 17.4335,
-      east: 78.3872,
-      west: 78.3672
+      north: 17.5969,
+      south: 17.1731,
+      east: 78.6804,
+      west: 78.2930
     }
   }
 ] as const;
@@ -95,7 +95,7 @@ export type InsertTower = z.infer<typeof insertTowerSchema>;
 export type Tower = typeof towers.$inferSelect;
 
 // Typical 5G tower coverage radius in urban areas (in kilometers)
-export const TOWER_COVERAGE_RADIUS_KM = 1;
+export const TOWER_COVERAGE_RADIUS_KM = 2;
 
 // Site scoring weights
 export const SITE_SCORE_WEIGHTS = {
