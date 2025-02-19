@@ -16,19 +16,23 @@ interface MapViewProps {
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
   const map = useMapEvents({
-    dragenter: (e) => {
+    dragenter: (e: any) => {
       e.preventDefault();
     },
-    dragover: (e) => {
+    dragover: (e: any) => {
       e.preventDefault();
-      if (e.originalEvent) {
-        e.originalEvent.dataTransfer.dropEffect = 'copy';
+      const dataTransfer = e.originalEvent?.dataTransfer;
+      if (dataTransfer) {
+        dataTransfer.dropEffect = 'copy';
       }
     },
-    drop: (e) => {
+    drop: (e: any) => {
       e.preventDefault();
       const { lat, lng } = e.latlng;
-      onTowerDrop(lat, lng);
+      const dataTransfer = e.originalEvent?.dataTransfer;
+      if (dataTransfer?.getData('text/plain') === 'new-tower') {
+        onTowerDrop(lat, lng);
+      }
     },
   });
   return null;
