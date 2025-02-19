@@ -1,10 +1,12 @@
-import { useRef, useCallback } from 'react';
-import Map, { Marker, Layer, Source, LayerProps } from 'react-map-gl';
+import { useRef, useCallback, useEffect } from 'react';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { LatLng } from 'leaflet';
 import type { Tower } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateSignalStrength } from '@/lib/rf-calculations';
-
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import 'leaflet-heatmap';
 
 interface MapViewProps {
   towers: Tower[];
@@ -12,84 +14,75 @@ interface MapViewProps {
   selectedTower?: Tower;
 }
 
-export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewProps) {
-  const mapRef = useRef<any>(null);
+function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    dragover: (e: any) => {
+      e.preventDefault();
+    },
+    drop: (e: any) => {
+      const { lat, lng } = e.latlng;
+      onTowerDrop(lat, lng);
+    },
+  });
+  return null;
+}
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const map = mapRef.current?.getMap();
-    if (!map) return;
+function CoverageLayer({ tower }: { tower: Tower }) {
+  const map = useMap();
 
-    const coords = map.unproject([event.clientX, event.clientY]);
-    onTowerDrop(coords.lat, coords.lng);
-  }, [onTowerDrop]);
+  useEffect(() => {
+    if (!tower) return;
 
-  const coverageLayer: LayerProps = {
-    id: 'coverage',
-    type: 'heatmap',
-    paint: {
-      'heatmap-weight': [
-        'interpolate',
-        ['linear'],
-        ['get', 'signal'],
-        -120,
-        0,
-        -60,
-        1
-      ],
-      'heatmap-intensity': 1,
-      'heatmap-color': [
-        'interpolate',
-        ['linear'],
-        ['heatmap-density'],
-        0,
-        'rgba(33,102,172,0)',
-        0.2,
-        'rgb(103,169,207)',
-        0.4,
-        'rgb(209,229,240)',
-        0.6,
-        'rgb(253,219,199)',
-        0.8,
-        'rgb(239,138,98)',
-        1,
-        'rgb(178,24,43)'
-      ],
-      'heatmap-radius': 30
+    const points = [];
+    const bounds = map.getBounds();
+    const step = 0.001; 
+
+    for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
+      for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
+        const signal = calculateSignalStrength(tower, lat, lng);
+        points.push({
+          lat,
+          lng,
+          value: (signal + 120) / 60
+        }); 
+      }
     }
-  };
 
-  const coverageData = selectedTower ? {
-    type: 'FeatureCollection',
-    features: Array.from({ length: 1000 }).map(() => {
-      const lat = Number(selectedTower.latitude) + (Math.random() - 0.5) * 0.1;
-      const lon = Number(selectedTower.longitude) + (Math.random() - 0.5) * 0.1;
-      const signal = calculateSignalStrength(selectedTower, lat, lon);
-      return {
-        type: 'Feature',
-        properties: { signal },
-        geometry: {
-          type: 'Point',
-          coordinates: [lon, lat]
-        }
-      };
-    })
-  } : null;
+    // @ts-ignore - leaflet-heatmap types are not available
+    const heatmapLayer = new L.HeatLayer(points, {
+      radius: 25,
+      blur: 15,
+      maxZoom: 10,
+      gradient: {
+        0.4: '#ffffb2',
+        0.6: '#fd8d3c',
+        0.8: '#fd8d3c',
+        1.0: '#bd0026'
+      }
+    });
 
+    heatmapLayer.addTo(map);
+    return () => {
+      map.removeLayer(heatmapLayer);
+    };
+  }, [tower, map]);
+
+  return null;
+}
+
+export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewProps) {
   return (
-    <Map
-      ref={mapRef}
-      initialViewState={{
-        latitude: 40,
-        longitude: -100,
-        zoom: 3.5
-      }}
+    <MapContainer
+      center={[40, -100]}
+      zoom={4}
       style={{ width: '100%', height: '100%' }}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
-      mapboxAccessToken={MAPBOX_TOKEN}
-      onDragOver={(e: React.DragEvent<HTMLDivElement>) => e.preventDefault()}
-      onDrop={handleDrop}
+      scrollWheelZoom={true}
     >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <MapEvents onTowerDrop={onTowerDrop} />
       {towers.map((tower) => (
         <TowerMarker
           key={tower.id}
@@ -97,11 +90,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewP
           isSelected={selectedTower?.id === tower.id}
         />
       ))}
-      {coverageData && (
-        <Source type="geojson" data={coverageData}>
-          <Layer {...coverageLayer} />
-        </Source>
-      )}
-    </Map>
+      {selectedTower && <CoverageLayer tower={selectedTower} />}
+    </MapContainer>
   );
 }

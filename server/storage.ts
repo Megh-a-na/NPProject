@@ -27,7 +27,16 @@ export class MemStorage implements IStorage {
 
   async createTower(insertTower: InsertTower): Promise<Tower> {
     const id = this.currentId++;
-    const tower: Tower = { ...insertTower, id };
+    const tower: Tower = { 
+      id,
+      name: insertTower.name,
+      latitude: insertTower.latitude.toString(),
+      longitude: insertTower.longitude.toString(),
+      height: insertTower.height.toString(),
+      transmissionPower: insertTower.transmissionPower.toString(),
+      frequency: insertTower.frequency.toString(),
+      antennaGain: insertTower.antennaGain.toString()
+    };
     this.towers.set(id, tower);
     return tower;
   }
@@ -35,8 +44,15 @@ export class MemStorage implements IStorage {
   async updateTower(id: number, updates: Partial<InsertTower>): Promise<Tower | undefined> {
     const existing = this.towers.get(id);
     if (!existing) return undefined;
-    
-    const updated = { ...existing, ...updates };
+
+    const updated: Tower = {
+      ...existing,
+      ...Object.entries(updates).reduce((acc, [key, value]) => ({
+        ...acc,
+        [key]: key === 'name' ? value : value?.toString()
+      }), {} as Partial<Tower>)
+    };
+
     this.towers.set(id, updated);
     return updated;
   }
