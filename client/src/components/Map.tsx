@@ -107,7 +107,7 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         gradient: {
           0.0: 'rgba(34, 197, 94, 0.02)',   // Very transparent green
           0.3: 'rgba(234, 179, 8, 0.015)',  // Almost invisible yellow
-          0.6: 'rgba(239, 68, 68, 0.01)'    // Barely visible red
+          0.6: 'rgba(255, 128, 128, 0.008)'    // Even lighter and more transparent red
         }
       }).addTo(map);
     };
