@@ -8,9 +8,12 @@ export function calculateWavelength(frequency: number): number {
 
 export function calculatePathLoss(tower: Tower, distance: number): number {
   const wavelength = calculateWavelength(Number(tower.frequency));
-  // Free space path loss formula
+  // Modified free space path loss formula with additional urban environment factors
   const pathLoss = 20 * Math.log10(distance) + 20 * Math.log10(wavelength) - 147.55;
-  return pathLoss;
+
+  // Add urban environment loss factors
+  const urbanLoss = 20; // Additional loss in urban environments (dB)
+  return pathLoss + urbanLoss;
 }
 
 export function calculateSignalStrength(tower: Tower, lat: number, lon: number): number {
@@ -24,12 +27,18 @@ export function calculateSignalStrength(tower: Tower, lat: number, lon: number):
           Math.cos(φ1) * Math.cos(φ2) *
           Math.sin(Δλ/2) * Math.sin(Δλ/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c;
+  const distance = R * c / 1000; // Convert to kilometers
 
-  const pathLoss = calculatePathLoss(tower, distance);
+  // Maximum effective range for 5G in urban areas (in km)
+  const maxRange = 4; // Based on 1-4 miles conversion
+  if (distance > maxRange) {
+    return -120; // Minimum signal strength (dBm)
+  }
+
+  const pathLoss = calculatePathLoss(tower, distance * 1000); // Convert back to meters for path loss
   const signalStrength = Number(tower.transmissionPower) + Number(tower.antennaGain) - pathLoss;
 
-  return signalStrength;
+  return Math.max(-120, Math.min(signalStrength, -50)); // Clamp between -120 and -50 dBm
 }
 
 // New function to calculate combined signal strength from all towers

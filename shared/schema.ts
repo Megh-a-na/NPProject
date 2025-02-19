@@ -95,7 +95,7 @@ export type InsertTower = z.infer<typeof insertTowerSchema>;
 export type Tower = typeof towers.$inferSelect;
 
 // Typical 5G tower coverage radius in urban areas (in kilometers)
-export const TOWER_COVERAGE_RADIUS_KM = 2;
+export const TOWER_COVERAGE_RADIUS_KM = 4; // Average of 1-4 miles converted to km
 
 // Site scoring weights
 export const SITE_SCORE_WEIGHTS = {

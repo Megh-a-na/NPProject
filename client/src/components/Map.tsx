@@ -78,19 +78,17 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
     const updateHeatmap = () => {
       const bounds = map.getBounds();
       const points = [];
-      const step = 0.002; // Grid step size for heatmap points
+      const step = 0.003; 
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
         for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
-          // Calculate signal strength at this point
           const signalStrengths = towers.map(tower => calculateSignalStrength(tower, lat, lng));
           const maxSignal = Math.max(...signalStrengths);
-
-          // Normalize signal strength to [0,1] range for heatmap intensity
-          // Assuming signal strength is in dBm, typical range -120 to -50
           const normalizedIntensity = (maxSignal + 120) / 70;
 
-          points.push([lat, lng, normalizedIntensity]);
+          if (normalizedIntensity > 0.1) { 
+            points.push([lat, lng, normalizedIntensity]);
+          }
         }
       }
 
@@ -103,11 +101,11 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         blur: 15,
         maxZoom: 10,
         max: 1.0,
+        minOpacity: 0.3, 
         gradient: {
-          0.4: '#ffffb2',
-          0.6: '#fd8d3c',
-          0.8: '#f03b20',
-          1.0: '#bd0026'
+          0.0: 'rgba(0, 255, 0, 0.5)',   
+          0.5: 'rgba(255, 255, 0, 0.5)',  
+          1.0: 'rgba(255, 0, 0, 0.5)'    
         }
       }).addTo(map);
     };
