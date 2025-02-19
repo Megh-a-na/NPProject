@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Tower } from "@shared/schema";
-import { DISTRICTS } from "@shared/schema";
+import { INDIAN_LOCALITIES } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,20 +14,20 @@ import { optimizeTowerPlacements } from "@/lib/site-optimization";
 import MapView from "@/components/Map";
 
 export default function Home() {
-  const [selectedDistrict, setSelectedDistrict] = useState<string>();
+  const [selectedLocality, setSelectedLocality] = useState<string>();
   const [towerCount, setTowerCount] = useState<number>(1);
   const [selectedTower, setSelectedTower] = useState<Tower>();
   const { toast } = useToast();
 
   const { data: towers = [], isLoading } = useQuery<Tower[]>({
-    queryKey: ["/api/towers", selectedDistrict],
-    enabled: !!selectedDistrict
+    queryKey: ["/api/towers", selectedLocality],
+    enabled: !!selectedLocality
   });
 
   const createTowerMutation = useMutation({
     mutationFn: async (tower: {
       name: string;
-      district: string;
+      locality: string;
       height: number;
       transmissionPower: number;
       frequency: number;
@@ -40,7 +40,7 @@ export default function Home() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedDistrict] });
+      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedLocality] });
       toast({
         title: "Tower placement optimized",
         description: "The towers have been placed for optimal coverage.",
@@ -58,21 +58,21 @@ export default function Home() {
   const clearTowersMutation = useMutation({
     mutationFn: async () => {
       const promises = towers
-        .filter(tower => tower.district === selectedDistrict)
+        .filter(tower => tower.locality === selectedLocality)
         .map(tower => apiRequest("DELETE", `/api/towers/${tower.id}`));
       await Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedDistrict] });
+      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedLocality] });
       toast({
         title: "Towers cleared",
-        description: "All towers have been removed from this district.",
+        description: "All towers have been removed from this locality.",
       });
     },
   });
 
   const handleOptimizePlacement = async () => {
-    if (!selectedDistrict) return;
+    if (!selectedLocality) return;
 
     // First clear existing towers
     if (towers.length > 0) {
@@ -82,18 +82,18 @@ export default function Home() {
     toast({
       title: "Optimizing tower placement",
       description: `Finding optimal positions for ${towerCount} towers in ${
-        DISTRICTS.find(d => d.id === selectedDistrict)?.name
+        INDIAN_LOCALITIES.find(l => l.id === selectedLocality)?.name
       }...`,
     });
 
     // Get optimized tower positions
-    const positions = optimizeTowerPlacements(selectedDistrict, towerCount);
+    const positions = optimizeTowerPlacements(selectedLocality, towerCount);
 
     // Create towers at optimized positions
     for (let i = 0; i < positions.length; i++) {
       const newTower = {
         name: `Tower ${i + 1}`,
-        district: selectedDistrict,
+        locality: selectedLocality,
         height: 30,
         transmissionPower: 40,
         frequency: 3500,
@@ -123,59 +123,53 @@ export default function Home() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="district">Select District</Label>
+              <Label htmlFor="locality">Select Locality</Label>
               <Select
-                value={selectedDistrict}
-                onValueChange={(value) => {
-                  setSelectedDistrict(value);
-                  setTowerCount(1);
-                }}
+                value={selectedLocality}
+                onValueChange={setSelectedLocality}
               >
-                <SelectTrigger id="district">
-                  <SelectValue placeholder="Choose a district" />
+                <SelectTrigger id="locality">
+                  <SelectValue placeholder="Choose a locality" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DISTRICTS.map((district) => (
-                    <SelectItem key={district.id} value={district.id}>
-                      {district.name}
+                  {INDIAN_LOCALITIES.map((locality) => (
+                    <SelectItem key={locality.id} value={locality.id}>
+                      {locality.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selectedDistrict && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="towerCount">Number of Towers</Label>
-                  <Input
-                    id="towerCount"
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={towerCount}
-                    onChange={(e) => setTowerCount(parseInt(e.target.value) || 1)}
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="towerCount">Number of Towers</Label>
+              <Input
+                id="towerCount"
+                type="number"
+                min={1}
+                max={10}
+                value={towerCount}
+                onChange={(e) => setTowerCount(parseInt(e.target.value) || 1)}
+              />
+            </div>
 
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleOptimizePlacement}
-                    className="flex-1"
-                  >
-                    Optimize Tower Placement
-                  </Button>
-                  <Button 
-                    onClick={handleClearTowers}
-                    disabled={towers.length === 0}
-                    variant="destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Clear Towers
-                  </Button>
-                </div>
-              </>
-            )}
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleOptimizePlacement}
+                disabled={!selectedLocality}
+                className="flex-1"
+              >
+                Optimize Tower Placement
+              </Button>
+              <Button 
+                onClick={handleClearTowers}
+                disabled={!selectedLocality || towers.length === 0}
+                variant="destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear Towers
+              </Button>
+            </div>
 
             {towers.length > 0 && (
               <div className="mt-4 space-y-2 border-t pt-4">
@@ -192,7 +186,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        {selectedDistrict && (
+        {selectedLocality && (
           <Card className="h-[600px]">
             <CardHeader>
               <CardTitle>Coverage Map</CardTitle>
@@ -203,7 +197,7 @@ export default function Home() {
                 onTowerDrop={(lat, lon) => {}}
                 selectedTower={selectedTower}
                 onSelectTower={setSelectedTower}
-                district={selectedDistrict}
+                locality={selectedLocality}
               />
             </CardContent>
           </Card>
