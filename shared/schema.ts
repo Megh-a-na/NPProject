@@ -5,63 +5,63 @@ import { z } from "zod";
 // Define available localities with their approximate areas and coordinates
 export const INDIAN_LOCALITIES = [
   { 
-    id: "mumbai", 
-    name: "Mumbai Metropolitan", 
-    areaKm2: 603,
-    center: { lat: 19.0760, lng: 72.8777 },
+    id: "pune_district", 
+    name: "Pune District, Maharashtra", 
+    areaKm2: 15643,
+    center: { lat: 18.5204, lng: 73.8567 },
     bounds: {
       north: 19.2813,
-      south: 18.8921,
-      east: 73.0196,
-      west: 72.7758
+      south: 17.9921,
+      east: 74.5196,
+      west: 73.2758
     }
   },
   { 
-    id: "bangalore", 
-    name: "Bangalore City", 
-    areaKm2: 741,
-    center: { lat: 12.9716, lng: 77.5946 },
+    id: "coimbatore_district", 
+    name: "Coimbatore District, Tamil Nadu", 
+    areaKm2: 7469,
+    center: { lat: 11.0168, lng: 76.9558 },
     bounds: {
-      north: 13.1367,
-      south: 12.8065,
-      east: 77.7826,
-      west: 77.4066
+      north: 11.3367,
+      south: 10.5065,
+      east: 77.3826,
+      west: 76.5066
     }
   },
   { 
-    id: "delhi", 
-    name: "Delhi NCR", 
-    areaKm2: 1484,
-    center: { lat: 28.6139, lng: 77.2090 },
+    id: "surat_district", 
+    name: "Surat District, Gujarat", 
+    areaKm2: 4418,
+    center: { lat: 21.1702, lng: 72.8311 },
     bounds: {
-      north: 28.8834,
-      south: 28.3444,
-      east: 77.5226,
-      west: 76.8954
+      north: 21.4834,
+      south: 20.8444,
+      east: 73.2226,
+      west: 72.4954
     }
   },
   { 
-    id: "chennai", 
-    name: "Chennai City", 
-    areaKm2: 426,
-    center: { lat: 13.0827, lng: 80.2707 },
+    id: "lucknow_district", 
+    name: "Lucknow District, Uttar Pradesh", 
+    areaKm2: 2528,
+    center: { lat: 26.8467, lng: 80.9462 },
     bounds: {
-      north: 13.2687,
-      south: 12.8967,
-      east: 80.3464,
-      west: 80.1950
+      north: 27.0687,
+      south: 26.5967,
+      east: 81.3464,
+      west: 80.5950
     }
   },
   { 
-    id: "hyderabad", 
-    name: "Hyderabad City", 
-    areaKm2: 650,
-    center: { lat: 17.3850, lng: 78.4867 },
+    id: "vizag_district", 
+    name: "Visakhapatnam District, Andhra Pradesh", 
+    areaKm2: 11161,
+    center: { lat: 17.6868, lng: 83.2185 },
     bounds: {
-      north: 17.5969,
+      north: 18.1969,
       south: 17.1731,
-      east: 78.6804,
-      west: 78.2930
+      east: 83.6804,
+      west: 82.7930
     }
   }
 ] as const;
