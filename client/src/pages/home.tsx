@@ -18,7 +18,8 @@ export default function Home() {
   const createTowerMutation = useMutation({
     mutationFn: async (tower: InsertTower) => {
       const res = await apiRequest("POST", "/api/towers", tower);
-      return res.json() as Promise<Tower>;
+      const data = await res.json() as Tower;
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/towers"] });
@@ -26,6 +27,13 @@ export default function Home() {
       toast({
         title: "Tower created",
         description: "The tower has been successfully created.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create tower: " + error.message,
+        variant: "destructive",
       });
     },
   });
@@ -49,16 +57,20 @@ export default function Home() {
   });
 
   const handleTowerDrop = async (latitude: number, longitude: number) => {
-    const newTower: InsertTower = {
-      name: `Tower ${towers.length + 1}`,
-      latitude,
-      longitude,
-      height: 30,
-      transmissionPower: 40,
-      frequency: 3500,
-      antennaGain: 15,
-    };
-    await createTowerMutation.mutateAsync(newTower);
+    try {
+      const newTower: InsertTower = {
+        name: `Tower ${towers.length + 1}`,
+        latitude,
+        longitude,
+        height: 30,
+        transmissionPower: 40,
+        frequency: 3500,
+        antennaGain: 15,
+      };
+      await createTowerMutation.mutateAsync(newTower);
+    } catch (error) {
+      console.error('Failed to create tower:', error);
+    }
   };
 
   const handleTowerUpdate = (updates: Partial<InsertTower>) => {
