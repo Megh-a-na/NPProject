@@ -10,22 +10,21 @@ interface CandidateSite {
   distance: number;
 }
 
-function generateCandidateSites(locality: string, numSites = 20): CandidateSite[] {
-  // Find the locality info from districts
-  const localityInfo = DISTRICTS.flatMap(d => d.localities).find(l => l.id === locality)!;
+function generateCandidateSites(districtId: string, numSites = 20): CandidateSite[] {
+  const districtInfo = DISTRICTS.find(d => d.id === districtId)!;
   const sites: CandidateSite[] = [];
 
   for (let i = 0; i < numSites; i++) {
-    // Generate random coordinates within locality bounds
-    const lat = localityInfo.bounds.south + 
-      Math.random() * (localityInfo.bounds.north - localityInfo.bounds.south);
-    const lng = localityInfo.bounds.west + 
-      Math.random() * (localityInfo.bounds.east - localityInfo.bounds.west);
+    // Generate random coordinates within district bounds
+    const lat = districtInfo.bounds.south + 
+      Math.random() * (districtInfo.bounds.north - districtInfo.bounds.south);
+    const lng = districtInfo.bounds.west + 
+      Math.random() * (districtInfo.bounds.east - districtInfo.bounds.west);
 
     // Calculate distance from center
     const distance = Math.sqrt(
-      Math.pow(lat - localityInfo.center.lat, 2) + 
-      Math.pow(lng - localityInfo.center.lng, 2)
+      Math.pow(lat - districtInfo.center.lat, 2) + 
+      Math.pow(lng - districtInfo.center.lng, 2)
     ) * 111; // Convert to approximate kilometers
 
     sites.push({
@@ -62,12 +61,12 @@ function rankSites(sites: CandidateSite[]): CandidateSite[] {
     .sort((a, b) => (b as any).score - (a as any).score);
 }
 
-export function optimizeTowerPlacements(locality: string, numTowers: number): {
+export function optimizeTowerPlacements(districtId: string, numTowers: number): {
   latitude: number;
   longitude: number;
 }[] {
   // Generate and rank candidate sites
-  const candidateSites = generateCandidateSites(locality);
+  const candidateSites = generateCandidateSites(districtId);
   const rankedSites = rankSites(candidateSites);
 
   // Select the top N sites based on their scores

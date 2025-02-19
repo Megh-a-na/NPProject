@@ -13,15 +13,9 @@ import { Trash2 } from "lucide-react";
 import { optimizeTowerPlacements } from "@/lib/site-optimization";
 import MapView from "@/components/Map";
 
-interface TowerLocation {
-  locality: string;
-  position: { latitude: number; longitude: number; } | null;
-}
-
 export default function Home() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>();
   const [towerCount, setTowerCount] = useState<number>(1);
-  const [towerLocations, setTowerLocations] = useState<TowerLocation[]>([]);
   const [selectedTower, setSelectedTower] = useState<Tower>();
   const { toast } = useToast();
 
@@ -34,7 +28,6 @@ export default function Home() {
     mutationFn: async (tower: {
       name: string;
       district: string;
-      locality: string;
       height: number;
       transmissionPower: number;
       frequency: number;
@@ -78,29 +71,6 @@ export default function Home() {
     },
   });
 
-  // Update tower locations when count changes
-  const handleTowerCountChange = (count: number) => {
-    setTowerCount(count);
-    setTowerLocations(prev => {
-      if (count > prev.length) {
-        return [...prev, ...Array(count - prev.length).fill({ locality: "", position: null })];
-      }
-      return prev.slice(0, count);
-    });
-  };
-
-  // Handle locality selection for a specific tower
-  const handleLocalitySelect = (index: number, localityId: string) => {
-    setTowerLocations(prev => {
-      const newLocations = [...prev];
-      newLocations[index] = {
-        locality: localityId,
-        position: null
-      };
-      return newLocations;
-    });
-  };
-
   const handleOptimizePlacement = async () => {
     if (!selectedDistrict) return;
 
@@ -111,32 +81,25 @@ export default function Home() {
 
     toast({
       title: "Optimizing tower placement",
-      description: `Finding optimal positions for ${towerCount} towers...`,
+      description: `Finding optimal positions for ${towerCount} towers in ${
+        DISTRICTS.find(d => d.id === selectedDistrict)?.name
+      }...`,
     });
 
-    // Create towers at selected localities
-    for (let i = 0; i < towerLocations.length; i++) {
-      const location = towerLocations[i];
-      if (!location.locality) continue;
+    // Get optimized tower positions
+    const positions = optimizeTowerPlacements(selectedDistrict, towerCount);
 
-      const locality = DISTRICTS
-        .find(d => d.id === selectedDistrict)
-        ?.localities.find(l => l.id === location.locality);
-
-      if (!locality) continue;
-
-      const position = optimizeTowerPlacements(location.locality, 1)[0];
-
+    // Create towers at optimized positions
+    for (let i = 0; i < positions.length; i++) {
       const newTower = {
         name: `Tower ${i + 1}`,
         district: selectedDistrict,
-        locality: location.locality,
         height: 30,
         transmissionPower: 40,
         frequency: 3500,
         antennaGain: 15,
-        latitude: position.latitude,
-        longitude: position.longitude,
+        latitude: positions[i].latitude,
+        longitude: positions[i].longitude,
       };
 
       await createTowerMutation.mutateAsync(newTower);
@@ -150,10 +113,6 @@ export default function Home() {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
-  const selectedDistrictData = selectedDistrict 
-    ? DISTRICTS.find(d => d.id === selectedDistrict)
-    : null;
 
   return (
     <div className="container mx-auto p-6">
@@ -169,7 +128,6 @@ export default function Home() {
                 value={selectedDistrict}
                 onValueChange={(value) => {
                   setSelectedDistrict(value);
-                  setTowerLocations([]);
                   setTowerCount(1);
                 }}
               >
@@ -196,35 +154,13 @@ export default function Home() {
                     min={1}
                     max={10}
                     value={towerCount}
-                    onChange={(e) => handleTowerCountChange(parseInt(e.target.value) || 1)}
+                    onChange={(e) => setTowerCount(parseInt(e.target.value) || 1)}
                   />
                 </div>
-
-                {towerLocations.map((tower, index) => (
-                  <div key={index} className="space-y-2">
-                    <Label htmlFor={`tower-${index}-locality`}>Tower {index + 1} Location</Label>
-                    <Select
-                      value={tower.locality}
-                      onValueChange={(value) => handleLocalitySelect(index, value)}
-                    >
-                      <SelectTrigger id={`tower-${index}-locality`}>
-                        <SelectValue placeholder="Choose a locality" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedDistrictData?.localities.map((locality) => (
-                          <SelectItem key={locality.id} value={locality.id}>
-                            {locality.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
 
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleOptimizePlacement}
-                    disabled={!towerLocations.every(t => t.locality)}
                     className="flex-1"
                   >
                     Optimize Tower Placement
@@ -247,7 +183,7 @@ export default function Home() {
                 <div className="space-y-2">
                   {towers.map((tower) => (
                     <div key={tower.id} className="text-sm">
-                      <strong>{tower.name}</strong> ({tower.locality}): {Number(tower.latitude).toFixed(4)}°N, {Number(tower.longitude).toFixed(4)}°E
+                      <strong>{tower.name}</strong>: {Number(tower.latitude).toFixed(4)}°N, {Number(tower.longitude).toFixed(4)}°E
                     </div>
                   ))}
                 </div>
