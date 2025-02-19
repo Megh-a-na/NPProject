@@ -6,6 +6,13 @@ interface LocalityInfo {
   id: string;
   name: string;
   areaKm2: number;
+  center: { lat: number; lng: number };
+  bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
 }
 
 interface CoverageVisualizationProps {
@@ -52,17 +59,19 @@ export default function CoverageVisualization({ locality, towers }: CoverageVisu
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 1;
 
-    // Calculate the scale factor (pixels per kilometer)
-    const scaleFactor = Math.min(
-      canvas.width / Math.sqrt(locality.areaKm2),
-      canvas.height / Math.sqrt(locality.areaKm2)
-    );
+    // Helper function to convert lat/lng to canvas coordinates
+    const toCanvasCoords = (lat: number, lng: number) => {
+      const x = ((lng - locality.bounds.west) / (locality.bounds.east - locality.bounds.west)) * canvas.width;
+      const y = ((locality.bounds.north - lat) / (locality.bounds.north - locality.bounds.south)) * canvas.height;
+      return { x, y };
+    };
 
     // Draw coverage areas for each tower
     towers.forEach(tower => {
-      const x = Number(tower.positionX) * canvas.width;
-      const y = Number(tower.positionY) * canvas.height;
-      const radius = TOWER_COVERAGE_RADIUS_KM * scaleFactor;
+      const { x, y } = toCanvasCoords(Number(tower.latitude), Number(tower.longitude));
+      // Convert coverage radius from km to pixels
+      const kmToPixels = canvas.width / (locality.bounds.east - locality.bounds.west) / 111;
+      const radius = TOWER_COVERAGE_RADIUS_KM * kmToPixels;
 
       // Draw coverage area with gradient
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);

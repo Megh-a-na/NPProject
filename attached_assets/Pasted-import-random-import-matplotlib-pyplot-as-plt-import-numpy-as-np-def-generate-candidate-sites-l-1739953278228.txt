@@ -1,0 +1,108 @@
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+
+def generate_candidate_sites(locality, num_sites=10):
+    """
+    Simulate a list of candidate sites in the given locality.
+    Each site is a dictionary with:
+      - 'site_id': Unique identifier
+      - 'terrain': Favorability of terrain (higher is better)
+      - 'environment': Environmental interference (lower is better)
+      - 'accessibility': How accessible the site is (higher is better)
+      - 'distance': Distance from the center of the locality (lower is better)
+    """
+    candidate_sites = []
+    for i in range(num_sites):
+        site = {
+            'id': i + 1,
+            'locality': locality,
+            'terrain': random.uniform(50, 100),      # e.g., scale 50-100
+            'environment': random.uniform(0, 50),      # lower values are better
+            'accessibility': random.uniform(50, 100),  # higher values are better
+            'distance': random.uniform(0, 10)          # in kilometers
+        }
+        candidate_sites.append(site)
+    return candidate_sites
+
+def compute_performance_score(site):
+    """
+    Compute a performance score for a candidate site.
+    The formula combines:
+      - Positive contributions from 'terrain' and 'accessibility'
+      - Negative contributions from 'distance' and 'environment'
+    A small random noise is added to mimic real-world variability.
+    
+    Formula (example):
+      score = 0.4 * terrain + 0.3 * accessibility - 0.2 * distance - 0.1 * environment + noise
+    """
+    noise = np.random.normal(0, 1)  # random noise with mean 0, std 1
+    score = (0.4 * site['terrain'] +
+             0.3 * site['accessibility'] -
+             0.2 * site['distance'] -
+             0.1 * site['environment'] +
+             noise)
+    return score
+
+def rank_sites(candidate_sites):
+    """
+    Compute the performance score for each candidate site and
+    return the list sorted by score (highest first).
+    """
+    for site in candidate_sites:
+        site['score'] = compute_performance_score(site)
+    ranked_sites = sorted(candidate_sites, key=lambda x: x['score'], reverse=True)
+    return ranked_sites
+
+def plot_ranked_sites(ranked_sites, num_towers):
+    """
+    Plot a bar chart showing the performance scores of the candidate sites.
+    The top 'num_towers' sites are highlighted in green.
+    """
+    site_ids = [f"Site {site['id']}" for site in ranked_sites]
+    scores = [site['score'] for site in ranked_sites]
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(site_ids, scores, color='skyblue')
+    plt.xlabel('Candidate Sites')
+    plt.ylabel('Performance Score')
+    plt.title(f'Performance Scores for Candidate Sites in {ranked_sites[0]["locality"]}\n(Top {num_towers} Sites Highlighted)')
+
+    # Highlight the top num_towers sites in green, others in red.
+    for i, bar in enumerate(bars):
+        if i < num_towers:
+            bar.set_color('green')
+        else:
+            bar.set_color('red')
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def main():
+    print("=== 5G Site Deployment Simulation ===")
+    locality = input("Enter the locality name: ")
+    try:
+        num_towers = int(input("Enter the number of 5G towers to be placed: "))
+    except ValueError:
+        print("Invalid input for number of towers. Using default of 2 towers.")
+        num_towers = 2
+
+    # Generate candidate sites (simulate 10 candidate sites)
+    candidate_sites = generate_candidate_sites(locality, num_sites=10)
+    
+    # Rank the sites based on performance score
+    ranked_sites = rank_sites(candidate_sites)
+    
+    # Display the ranked sites
+    print("\nRanked Candidate Sites:")
+    for site in ranked_sites:
+        print(f"Site {site['id']}: Score = {site['score']:.2f} | Terrain = {site['terrain']:.2f}, "
+              f"Accessibility = {site['accessibility']:.2f}, Distance = {site['distance']:.2f}, "
+              f"Environment = {site['environment']:.2f}")
+    
+    # Plot the results
+    plot_ranked_sites(ranked_sites, num_towers)
+
+if __name__ == "__main__":
+    main()

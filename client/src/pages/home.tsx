@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import CoverageVisualization from "@/components/CoverageVisualization";
 import { Trash2 } from "lucide-react";
+import { optimizeTowerPlacements } from "@/lib/site-optimization";
 
 export default function Home() {
   const [selectedLocality, setSelectedLocality] = useState<string>();
@@ -30,8 +31,8 @@ export default function Home() {
       transmissionPower: number;
       frequency: number;
       antennaGain: number;
-      positionX: number;
-      positionY: number;
+      latitude: number;
+      longitude: number;
     }) => {
       const res = await apiRequest("POST", "/api/towers", tower);
       const data = await res.json() as Tower;
@@ -80,17 +81,16 @@ export default function Home() {
 
     toast({
       title: "Optimizing tower placement",
-      description: `Calculating optimal positions for ${towerCount} towers in ${
+      description: `Finding optimal positions for ${towerCount} towers in ${
         INDIAN_LOCALITIES.find(l => l.id === selectedLocality)?.name
-      }`,
+      }...`,
     });
 
-    // Simple grid-based placement strategy
-    for (let i = 0; i < towerCount; i++) {
-      const gridSize = Math.ceil(Math.sqrt(towerCount));
-      const row = Math.floor(i / gridSize);
-      const col = i % gridSize;
+    // Get optimized tower positions
+    const positions = optimizeTowerPlacements(selectedLocality, towerCount);
 
+    // Create towers at optimized positions
+    for (let i = 0; i < positions.length; i++) {
       const newTower = {
         name: `Tower ${i + 1}`,
         locality: selectedLocality,
@@ -98,8 +98,8 @@ export default function Home() {
         transmissionPower: 40,
         frequency: 3500,
         antennaGain: 15,
-        positionX: (col + 0.5) / gridSize,
-        positionY: (row + 0.5) / gridSize,
+        latitude: positions[i].latitude,
+        longitude: positions[i].longitude,
       };
 
       await createTowerMutation.mutateAsync(newTower);
@@ -170,6 +170,19 @@ export default function Home() {
                 Clear Towers
               </Button>
             </div>
+
+            {towers.length > 0 && (
+              <div className="mt-4 space-y-2 border-t pt-4">
+                <h3 className="font-medium">Tower Locations:</h3>
+                <div className="space-y-2">
+                  {towers.map((tower) => (
+                    <div key={tower.id} className="text-sm">
+                      <strong>{tower.name}</strong>: {Number(tower.latitude).toFixed(4)}°N, {Number(tower.longitude).toFixed(4)}°E
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
