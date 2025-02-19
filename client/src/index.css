@@ -11,3 +11,13 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Ensure Leaflet controls stay below navbar */
+.leaflet-control-container .leaflet-top {
+  z-index: 900;
+  top: 80px; /* Add space below navbar */
+}
+
+.leaflet-control-container .leaflet-bottom {
+  z-index: 900;
+}
