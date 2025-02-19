@@ -1,29 +1,34 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Tower, InsertTower } from "@shared/schema";
-import MapView from "@/components/Map";
-import ControlPanel from "@/components/ControlPanel";
+import type { Tower } from "@shared/schema";
+import { INDIAN_LOCALITIES, TOWER_COVERAGE_RADIUS_KM } from "@shared/schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Radio } from "lucide-react";
+import CoverageVisualization from "@/components/CoverageVisualization";
 
 export default function Home() {
-  const [selectedTower, setSelectedTower] = useState<Tower>();
+  const [selectedLocality, setSelectedLocality] = useState<string>();
+  const [towerCount, setTowerCount] = useState<number>(1);
   const { toast } = useToast();
 
   const { data: towers = [], isLoading } = useQuery<Tower[]>({
-    queryKey: ["/api/towers"],
+    queryKey: ["/api/towers", selectedLocality],
+    enabled: !!selectedLocality // Only fetch towers when locality is selected
   });
 
   const createTowerMutation = useMutation({
-    mutationFn: async (tower: InsertTower) => {
+    mutationFn: async (tower: Partial<Tower>) => { //Simplified tower type
       const res = await apiRequest("POST", "/api/towers", tower);
       const data = await res.json() as Tower;
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/towers"] });
-      setSelectedTower(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/towers", selectedLocality] });
       toast({
         title: "Tower created",
         description: "The tower has been successfully created.",
@@ -38,49 +43,32 @@ export default function Home() {
     },
   });
 
-  const updateTowerMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: Partial<InsertTower> & { id: number }) => {
-      const res = await apiRequest("PATCH", `/api/towers/${id}`, updates);
-      return res.json() as Promise<Tower>;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/towers"] });
-      setSelectedTower(data);
-      toast({
-        title: "Tower updated",
-        description: "The tower parameters have been updated.",
-      });
-    },
-  });
+  const handleOptimizePlacement = () => {
+    // TODO: Implement tower placement optimization.  This would likely involve
+    //       an API call to a backend service that handles the optimization.
+    //       For now, we simulate it with a toast message.
+    toast({
+      title: "Optimizing tower placement",
+      description: `Calculating optimal positions for ${towerCount} towers in ${
+        INDIAN_LOCALITIES.find(l => l.id === selectedLocality)?.name
+      }`,
+    });
 
-  const handleTowerDrop = async (latitude: number, longitude: number) => {
-    try {
-      const newTower: InsertTower = {
-        name: `Tower ${towers.length + 1}`,
-        latitude,
-        longitude,
+    //Simulate creating towers after optimization (replace with actual optimization logic)
+    for (let i = 0; i < towerCount; i++) {
+      const newTower = {
+        name: `Tower ${i + 1}`,
+        latitude: 0, // Replace with optimized coordinates
+        longitude: 0, // Replace with optimized coordinates
         height: 30,
         transmissionPower: 40,
         frequency: 3500,
         antennaGain: 15,
+        locality: selectedLocality
       };
-      await createTowerMutation.mutateAsync(newTower);
-    } catch (error) {
-      console.error('Failed to create tower:', error);
+      createTowerMutation.mutate(newTower);
     }
-  };
 
-  const handleTowerUpdate = (updates: Partial<InsertTower>) => {
-    if (!selectedTower) return;
-    updateTowerMutation.mutate({ id: selectedTower.id, ...updates });
-  };
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new-tower' }));
   };
 
   if (isLoading) {
@@ -88,27 +76,67 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen">
-      <div className="w-1/4 p-4 bg-card overflow-y-auto">
-        <div className="mb-4">
-          <div
-            draggable
-            onDragStart={handleDragStart}
-            className="inline-flex items-center gap-2 p-3 bg-primary text-primary-foreground rounded-lg cursor-move hover:opacity-90 transition-opacity"
-          >
-            <Radio className="w-5 h-5" />
-            <span>Drag to add tower</span>
-          </div>
-        </div>
-        <ControlPanel tower={selectedTower} onUpdate={handleTowerUpdate} />
-      </div>
-      <div className="flex-1">
-        <MapView
-          towers={towers}
-          onTowerDrop={handleTowerDrop}
-          selectedTower={selectedTower}
-          onSelectTower={setSelectedTower}
-        />
+    <div className="container mx-auto p-6">
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>5G Tower Placement Optimizer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="locality">Select Locality</Label>
+              <Select
+                value={selectedLocality}
+                onValueChange={setSelectedLocality}
+              >
+                <SelectTrigger id="locality">
+                  <SelectValue placeholder="Choose a locality" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDIAN_LOCALITIES.map((locality) => (
+                    <SelectItem key={locality.id} value={locality.id}>
+                      {locality.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="towerCount">Number of Towers</Label>
+              <Input
+                id="towerCount"
+                type="number"
+                min={1}
+                max={10}
+                value={towerCount}
+                onChange={(e) => setTowerCount(parseInt(e.target.value) || 1)}
+              />
+            </div>
+
+            <Button 
+              onClick={handleOptimizePlacement}
+              disabled={!selectedLocality}
+              className="w-full"
+            >
+              Optimize Tower Placement
+            </Button>
+          </CardContent>
+        </Card>
+
+        {selectedLocality && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Coverage Visualization</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CoverageVisualization
+                locality={INDIAN_LOCALITIES.find(l => l.id === selectedLocality)!}
+                towers={towers}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
