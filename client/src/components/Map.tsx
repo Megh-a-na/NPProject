@@ -15,25 +15,47 @@ interface MapViewProps {
   onSelectTower: (tower: Tower) => void;
 }
 
-function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
-  useMapEvents({
-    drop(e: any) {
-      const { lat, lng } = e.latlng;
-      const data = e.originalEvent?.dataTransfer?.getData('application/json');
+function DragHandler({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy';
+      }
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const point = map.containerPointToLatLng([x, y]);
 
       try {
-        const parsedData = JSON.parse(data || '{}');
-        if (parsedData?.type === 'new-tower') {
-          onTowerDrop(lat, lng);
+        const data = e.dataTransfer?.getData('application/json');
+        if (data) {
+          const parsedData = JSON.parse(data);
+          if (parsedData.type === 'new-tower') {
+            onTowerDrop(point.lat, point.lng);
+          }
         }
       } catch (error) {
-        console.error('Failed to parse drop data:', error);
+        console.error('Failed to handle tower drop:', error);
       }
-    },
-    dragover(e: any) {
-      e.originalEvent.preventDefault();
-    }
-  });
+    };
+
+    container.addEventListener('dragover', handleDragOver);
+    container.addEventListener('drop', handleDrop);
+
+    return () => {
+      container.removeEventListener('dragover', handleDragOver);
+      container.removeEventListener('drop', handleDrop);
+    };
+  }, [map, onTowerDrop]);
 
   return null;
 }
@@ -100,7 +122,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTo
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapEvents onTowerDrop={onTowerDrop} />
+      <DragHandler onTowerDrop={onTowerDrop} />
       {towers.map((tower) => (
         <TowerMarker
           key={tower.id}

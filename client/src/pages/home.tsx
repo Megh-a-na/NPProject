@@ -79,8 +79,8 @@ export default function Home() {
   };
 
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new-tower' }));
     e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new-tower' }));
   };
 
   if (isLoading) {
