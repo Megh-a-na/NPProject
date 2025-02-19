@@ -83,7 +83,7 @@ export default function Home() {
   }
 
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('text/plain', 'new-tower');
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new-tower' }));
     e.dataTransfer.effectAllowed = 'copy';
   };
 
@@ -107,6 +107,7 @@ export default function Home() {
           towers={towers}
           onTowerDrop={handleTowerDrop}
           selectedTower={selectedTower}
+          onSelectTower={setSelectedTower}
         />
       </div>
     </div>

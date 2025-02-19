@@ -5,6 +5,7 @@ import type { Tower } from '@shared/schema';
 interface TowerMarkerProps {
   tower: Tower;
   isSelected: boolean;
+  onClick: () => void;
 }
 
 const towerIcon = new Icon({
@@ -17,12 +18,15 @@ const towerIcon = new Icon({
   iconAnchor: [12, 24],
 });
 
-export default function TowerMarker({ tower, isSelected }: TowerMarkerProps) {
+export default function TowerMarker({ tower, isSelected, onClick }: TowerMarkerProps) {
   return (
     <Marker
       position={[Number(tower.latitude), Number(tower.longitude)]}
       icon={towerIcon}
       opacity={isSelected ? 1 : 0.7}
+      eventHandlers={{
+        click: onClick,
+      }}
     >
       <Popup>
         <div className="p-2">

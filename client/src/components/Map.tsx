@@ -12,26 +12,75 @@ interface MapViewProps {
   towers: Tower[];
   onTowerDrop: (lat: number, lon: number) => void;
   selectedTower?: Tower;
+  onSelectTower: (tower: Tower) => void;
+}
+
+function DragOverlay() {
+  const map = useMap();
+  const overlayRef = useRef<L.DivIcon | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy';
+      }
+
+      if (!overlayRef.current) {
+        overlayRef.current = L.divIcon({
+          html: `<div class="w-6 h-6 bg-primary/50 rounded-full border-2 border-primary animate-pulse"></div>`,
+          className: '',
+        });
+      }
+
+      const point = map.mouseEventToLatLng(e as any);
+
+      if (!markerRef.current) {
+        markerRef.current = L.marker(point, { icon: overlayRef.current }).addTo(map);
+      } else {
+        markerRef.current.setLatLng(point);
+      }
+    };
+
+    const handleDragLeave = () => {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+
+    map.getContainer().addEventListener('dragover', handleDragOver);
+    map.getContainer().addEventListener('dragleave', handleDragLeave);
+
+    return () => {
+      map.getContainer().removeEventListener('dragover', handleDragOver);
+      map.getContainer().removeEventListener('dragleave', handleDragLeave);
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+      }
+    };
+  }, [map]);
+
+  return null;
 }
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
   const map = useMapEvents({
-    dragover: (e: any) => {
-      e.preventDefault();
-      const dataTransfer = e.originalEvent?.dataTransfer;
-      if (dataTransfer) {
-        dataTransfer.dropEffect = 'copy';
-      }
-    },
     drop: (e: any) => {
       e.preventDefault();
       const { lat, lng } = e.latlng;
-      const dataTransfer = e.originalEvent?.dataTransfer;
-      if (dataTransfer?.getData('text/plain') === 'new-tower') {
-        onTowerDrop(lat, lng);
+      try {
+        const data = JSON.parse(e.originalEvent?.dataTransfer?.getData('application/json'));
+        if (data?.type === 'new-tower') {
+          onTowerDrop(lat, lng);
+        }
+      } catch (error) {
+        console.error('Invalid drop data');
       }
-    },
+    }
   });
+
   return null;
 }
 
@@ -43,7 +92,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
 
     const points = [];
     const bounds = map.getBounds();
-    const step = 0.001; 
+    const step = 0.001;
 
     for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
       for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
@@ -52,7 +101,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
           lat,
           lng,
           value: (signal + 120) / 60
-        }); 
+        });
       }
     }
 
@@ -78,7 +127,7 @@ function CoverageLayer({ tower }: { tower: Tower }) {
   return null;
 }
 
-export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewProps) {
+export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower }: MapViewProps) {
   return (
     <MapContainer
       center={[40, -100]}
@@ -91,11 +140,13 @@ export default function MapView({ towers, onTowerDrop, selectedTower }: MapViewP
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapEvents onTowerDrop={onTowerDrop} />
+      <DragOverlay />
       {towers.map((tower) => (
         <TowerMarker
           key={tower.id}
           tower={tower}
           isSelected={selectedTower?.id === tower.id}
+          onClick={() => onSelectTower(tower)}
         />
       ))}
       {selectedTower && <CoverageLayer tower={selectedTower} />}
