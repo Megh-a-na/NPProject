@@ -24,15 +24,21 @@
 
 /* Ensure toast notifications appear above everything */
 [role="region"][aria-label="Notifications"] {
-  z-index: 1100 !important;
+  z-index: 9999 !important;
 }
 
 /* Toast portal and individual toasts */
 [data-sonner-toaster] {
-  z-index: 2000 !important;
+  z-index: 9999 !important;
   position: fixed !important;
+  top: 16px !important;
 }
 
 .sonner-toast {
-  z-index: 2000 !important;
+  z-index: 9999 !important;
+}
+
+/* Keep map container below toasts */
+.leaflet-container {
+  z-index: 0 !important;
 }
