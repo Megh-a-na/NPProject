@@ -101,11 +101,11 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         blur: 15,
         maxZoom: 10,
         max: 1.0,
-        minOpacity: 0.2,
+        minOpacity: 0.1,
         gradient: {
-          0.0: 'rgba(34, 197, 94, 0.4)',
-          0.5: 'rgba(234, 179, 8, 0.3)',
-          1.0: 'rgba(239, 68, 68, 0.1)'
+          0.0: 'rgba(34, 197, 94, 0.2)',
+          0.5: 'rgba(234, 179, 8, 0.15)',
+          1.0: 'rgba(239, 68, 68, 0.05)'
         }
       }).addTo(map);
     };
