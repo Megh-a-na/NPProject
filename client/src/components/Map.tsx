@@ -78,7 +78,7 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
     const updateHeatmap = () => {
       const bounds = map.getBounds();
       const points = [];
-      const step = 0.003; 
+      const step = 0.003;
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
         for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
@@ -86,7 +86,7 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
           const maxSignal = Math.max(...signalStrengths);
           const normalizedIntensity = (maxSignal + 120) / 70;
 
-          if (normalizedIntensity > 0.1) { 
+          if (normalizedIntensity > 0.1) {
             points.push([lat, lng, normalizedIntensity]);
           }
         }
@@ -101,11 +101,11 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         blur: 15,
         maxZoom: 10,
         max: 1.0,
-        minOpacity: 0.3, 
+        minOpacity: 0.2,
         gradient: {
-          0.0: 'rgba(0, 255, 0, 0.5)',   
-          0.5: 'rgba(255, 255, 0, 0.5)',  
-          1.0: 'rgba(255, 0, 0, 0.5)'    
+          0.0: 'rgba(34, 197, 94, 0.4)',
+          0.5: 'rgba(234, 179, 8, 0.3)',
+          1.0: 'rgba(239, 68, 68, 0.1)'
         }
       }).addTo(map);
     };
