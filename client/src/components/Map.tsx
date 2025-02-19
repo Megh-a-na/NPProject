@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { LatLng } from 'leaflet';
+import { LatLng, DragEvent as LeafletDragEvent } from 'leaflet';
 import type { Tower } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
 import { calculateCombinedSignalStrength } from '@/lib/rf-calculations';
@@ -52,10 +52,14 @@ function DragOverlay() {
 
     map.getContainer().addEventListener('dragover', handleDragOver);
     map.getContainer().addEventListener('dragleave', handleDragLeave);
+    map.getContainer().addEventListener('drop', (e) => {
+      e.preventDefault();
+    });
 
     return () => {
       map.getContainer().removeEventListener('dragover', handleDragOver);
       map.getContainer().removeEventListener('dragleave', handleDragLeave);
+      map.getContainer().removeEventListener('drop', (e) => e.preventDefault());
       if (markerRef.current) {
         map.removeLayer(markerRef.current);
       }
@@ -67,11 +71,17 @@ function DragOverlay() {
 
 function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) => void }) {
   const map = useMapEvents({
-    drop: (e: any) => {
-      e.preventDefault();
+    dragend(e) {
+      // Handle drag end
+    },
+    dragover(e) {
+      e.originalEvent.preventDefault();
+    },
+    drop(e) {
+      e.originalEvent.preventDefault();
       const { lat, lng } = e.latlng;
       try {
-        const data = JSON.parse(e.originalEvent?.dataTransfer?.getData('application/json'));
+        const data = JSON.parse(e.originalEvent?.dataTransfer?.getData('application/json') || '{}');
         if (data?.type === 'new-tower') {
           onTowerDrop(lat, lng);
         }
