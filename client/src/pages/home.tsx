@@ -115,7 +115,7 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto py-6 px-4 sm:px-6">
       <div className="grid gap-6">
         <Card>
           <CardHeader>
