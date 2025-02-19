@@ -86,6 +86,7 @@ function MapEvents({ onTowerDrop }: { onTowerDrop: (lat: number, lon: number) =>
 
 function CoverageLayer({ towers }: { towers: Tower[] }) {
   const map = useMap();
+  const heatmapLayerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!towers.length) return;
@@ -105,8 +106,12 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
       }
     }
 
-    // @ts-ignore - leaflet-heatmap types are not available
-    const heatmapLayer = new L.HeatLayer(points, {
+    if (heatmapLayerRef.current) {
+      map.removeLayer(heatmapLayerRef.current);
+    }
+
+    // @ts-ignore
+    heatmapLayerRef.current = new L.HeatLayer(points, {
       radius: 25,
       blur: 15,
       maxZoom: 10,
@@ -118,9 +123,11 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
       }
     });
 
-    heatmapLayer.addTo(map);
+    heatmapLayerRef.current.addTo(map);
     return () => {
-      map.removeLayer(heatmapLayer);
+      if (heatmapLayerRef.current) {
+        map.removeLayer(heatmapLayerRef.current);
+      }
     };
   }, [towers, map]);
 
