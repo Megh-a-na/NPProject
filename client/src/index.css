@@ -26,3 +26,13 @@
 [role="region"][aria-label="Notifications"] {
   z-index: 1100 !important;
 }
+
+/* Toast portal and individual toasts */
+[data-sonner-toaster] {
+  z-index: 2000 !important;
+  position: fixed !important;
+}
+
+.sonner-toast {
+  z-index: 2000 !important;
+}
