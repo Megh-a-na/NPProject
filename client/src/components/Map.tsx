@@ -102,7 +102,7 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         radius: 30,            // Increased radius
         blur: 25,             // Increased blur
         maxZoom: 10,
-        max: 0.6,             // Reduced maximum intensity
+        max: 0.1,             // Reduced maximum intensity
         minOpacity: 0.01,     // Very low minimum opacity
         gradient: {
           0.0: 'rgba(34, 197, 94, 0.02)',   // Very transparent green
