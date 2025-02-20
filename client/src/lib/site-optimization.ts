@@ -1,5 +1,4 @@
-import type { Tower } from "@shared/schema";
-import { apiRequest } from "./queryClient";
+import { INDIAN_LOCALITIES, type Tower, SITE_SCORE_WEIGHTS } from "@shared/schema";
 
 interface CandidateSite {
   id: number;
@@ -83,7 +82,7 @@ function distanceToPolygonBoundary(point: [number, number], polygon: [number, nu
 }
 
 // Simulate terrain favorability based on distance from major infrastructures
-function calculateTerrainFavorability(lat: number, lng: number, localityInfo: any): number {
+function calculateTerrainFavorability(lat: number, lng: number, localityInfo: typeof INDIAN_LOCALITIES[0]): number {
   // Distance from center indicates infrastructure density
   const distanceFromCenter = Math.sqrt(
     Math.pow(lat - localityInfo.center.lat, 2) + 
@@ -98,7 +97,7 @@ function calculateTerrainFavorability(lat: number, lng: number, localityInfo: an
 }
 
 // Calculate environmental interference based on position
-function calculateEnvironmentalInterference(lat: number, lng: number, localityInfo: any): number {
+function calculateEnvironmentalInterference(lat: number, lng: number, localityInfo: typeof INDIAN_LOCALITIES[0]): number {
   // More interference near boundaries and center (urban density)
   const distanceFromBoundary = distanceToPolygonBoundary([lng, lat], localityInfo.bounds.polygon as [number, number][]);
   const distanceFromCenter = Math.sqrt(
@@ -117,7 +116,7 @@ function calculateEnvironmentalInterference(lat: number, lng: number, localityIn
 }
 
 // Calculate accessibility score based on distance from center and boundaries
-function calculateAccessibility(lat: number, lng: number, localityInfo: any): number {
+function calculateAccessibility(lat: number, lng: number, localityInfo: typeof INDIAN_LOCALITIES[0]): number {
   const distanceFromBoundary = distanceToPolygonBoundary([lng, lat], localityInfo.bounds.polygon as [number, number][]);
   const distanceFromCenter = Math.sqrt(
     Math.pow(lat - localityInfo.center.lat, 2) + 
@@ -213,7 +212,7 @@ function rankSites(sites: CandidateSite[]): CandidateSite[] {
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
-export async function optimizeTowerPlacements(locality: string, numTowers: number): Promise<{
+export function optimizeTowerPlacements(locality: string, numTowers: number): {
   latitude: number;
   longitude: number;
   score: number;
@@ -223,12 +222,14 @@ export async function optimizeTowerPlacements(locality: string, numTowers: numbe
     accessibility: number;
     distance: number;
   };
-}[]> {
-  const res = await apiRequest("POST", "/api/optimize", {
-    locality,
-    numTowers
-  });
-  return await res.json();
-}
+}[] {
+  const candidateSites = generateCandidateSites(locality, numTowers * 4);
+  const rankedSites = rankSites(candidateSites);
 
-import { INDIAN_LOCALITIES, type Tower, SITE_SCORE_WEIGHTS } from "@shared/schema";
+  return rankedSites.slice(0, numTowers).map(site => ({
+    latitude: site.latitude,
+    longitude: site.longitude,
+    score: site.score ?? 0,
+    details: site.details!
+  }));
+}

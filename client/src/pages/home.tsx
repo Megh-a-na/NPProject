@@ -97,39 +97,31 @@ export default function Home() {
       }...`,
     });
 
-    try {
-      // Get optimized tower positions from Python backend
-      const positions = await optimizeTowerPlacements(selectedLocality, towerCount);
-      const newScores: Record<number, TowerScore> = {};
+    // Get optimized tower positions
+    const positions = optimizeTowerPlacements(selectedLocality, towerCount);
+    const newScores: Record<number, TowerScore> = {};
 
-      // Create towers at optimized positions
-      for (let i = 0; i < positions.length; i++) {
-        const newTower = {
-          name: `Tower ${i + 1} (Score: ${positions[i].score.toFixed(2)})`,
-          locality: selectedLocality,
-          height: 30,
-          transmissionPower: 40,
-          frequency: 3500,
-          antennaGain: 15,
-          latitude: positions[i].latitude,
-          longitude: positions[i].longitude,
-        };
+    // Create towers at optimized positions
+    for (let i = 0; i < positions.length; i++) {
+      const newTower = {
+        name: `Tower ${i + 1} (Score: ${positions[i].score.toFixed(2)})`,
+        locality: selectedLocality,
+        height: 30,
+        transmissionPower: 40,
+        frequency: 3500,
+        antennaGain: 15,
+        latitude: positions[i].latitude,
+        longitude: positions[i].longitude,
+      };
 
-        const tower = await createTowerMutation.mutateAsync(newTower);
-        newScores[tower.id] = {
-          score: positions[i].score,
-          details: positions[i].details
-        };
-      }
-
-      setTowerScores(newScores);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to optimize tower placement: " + String(error),
-        variant: "destructive",
-      });
+      const tower = await createTowerMutation.mutateAsync(newTower);
+      newScores[tower.id] = {
+        score: positions[i].score,
+        details: positions[i].details
+      };
     }
+
+    setTowerScores(newScores);
   };
 
   const handleClearTowers = () => {
