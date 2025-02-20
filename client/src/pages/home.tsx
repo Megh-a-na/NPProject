@@ -92,7 +92,7 @@ export default function Home() {
     // Create towers at optimized positions
     for (let i = 0; i < positions.length; i++) {
       const newTower = {
-        name: `Tower ${i + 1}`,
+        name: `Tower ${i + 1} (Score: ${positions[i].score.toFixed(2)})`,
         locality: selectedLocality,
         height: 30,
         transmissionPower: 40,

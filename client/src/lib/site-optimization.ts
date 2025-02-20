@@ -145,6 +145,7 @@ function rankSites(sites: CandidateSite[]): CandidateSite[] {
 export function optimizeTowerPlacements(locality: string, numTowers: number): {
   latitude: number;
   longitude: number;
+  score: number;
 }[] {
   // Generate more candidate sites than needed to ensure good coverage
   const candidateSites = generateCandidateSites(locality, numTowers * 4);
@@ -153,6 +154,7 @@ export function optimizeTowerPlacements(locality: string, numTowers: number): {
   // Select the top N sites based on their scores
   return rankedSites.slice(0, numTowers).map(site => ({
     latitude: site.latitude,
-    longitude: site.longitude
+    longitude: site.longitude,
+    score: site.score ?? 0
   }));
 }

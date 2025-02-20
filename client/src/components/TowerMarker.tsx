@@ -6,6 +6,7 @@ interface TowerMarkerProps {
   tower: Tower;
   isSelected: boolean;
   onClick: () => void;
+  score?: number;
 }
 
 const towerIcon = new Icon({
@@ -18,7 +19,7 @@ const towerIcon = new Icon({
   iconAnchor: [12, 24],
 });
 
-export default function TowerMarker({ tower, isSelected, onClick }: TowerMarkerProps) {
+export default function TowerMarker({ tower, isSelected, onClick, score }: TowerMarkerProps) {
   return (
     <Marker
       position={[Number(tower.latitude), Number(tower.longitude)]}
@@ -33,6 +34,20 @@ export default function TowerMarker({ tower, isSelected, onClick }: TowerMarkerP
           <h3 className="font-bold">{tower.name}</h3>
           <p>Power: {tower.transmissionPower} dBm</p>
           <p>Frequency: {tower.frequency} MHz</p>
+          {score !== undefined && (
+            <p className="mt-2 text-sm text-green-600">
+              Performance Score: {score.toFixed(2)}
+            </p>
+          )}
+          <div className="mt-2 text-xs text-gray-500">
+            <p>Based on:</p>
+            <ul className="list-disc list-inside">
+              <li>Terrain favorability</li>
+              <li>Environmental factors</li>
+              <li>Accessibility</li>
+              <li>Distance from center</li>
+            </ul>
+          </div>
         </div>
       </Popup>
     </Marker>
