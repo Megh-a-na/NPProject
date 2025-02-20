@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, GeoJSON } from 'react-leaflet';
 import type { Tower } from '@shared/schema';
 import { INDIAN_LOCALITIES } from '@shared/schema';
 import TowerMarker from '@/components/TowerMarker';
@@ -124,6 +124,55 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
   return null;
 }
 
+function LocalityBoundary({ locality }: { locality?: string }) {
+  const map = useMap();
+  const boundaryRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!locality) return;
+
+    const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality);
+    if (!localityInfo) return;
+
+    const bounds = {
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "Polygon",
+        coordinates: [[
+          [localityInfo.bounds.west, localityInfo.bounds.south],
+          [localityInfo.bounds.east, localityInfo.bounds.south],
+          [localityInfo.bounds.east, localityInfo.bounds.north],
+          [localityInfo.bounds.west, localityInfo.bounds.north],
+          [localityInfo.bounds.west, localityInfo.bounds.south],
+        ]]
+      }
+    };
+
+    if (boundaryRef.current) {
+      map.removeLayer(boundaryRef.current);
+    }
+
+    boundaryRef.current = L.geoJSON(bounds as any, {
+      style: {
+        fillColor: '#124191',
+        fillOpacity: 0.05,
+        color: '#124191',
+        weight: 2,
+        dashArray: '5, 5'
+      }
+    }).addTo(map);
+
+    return () => {
+      if (boundaryRef.current) {
+        map.removeLayer(boundaryRef.current);
+      }
+    };
+  }, [locality, map]);
+
+  return null;
+}
+
 export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTower, locality }: MapViewProps) {
   const localityInfo = locality ? INDIAN_LOCALITIES.find(l => l.id === locality) : undefined;
 
@@ -140,6 +189,7 @@ export default function MapView({ towers, onTowerDrop, selectedTower, onSelectTo
       />
       <MapController locality={locality} />
       <DragHandler onTowerDrop={onTowerDrop} />
+      <LocalityBoundary locality={locality} />
       {towers.map((tower) => (
         <TowerMarker
           key={tower.id}
