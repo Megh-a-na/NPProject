@@ -43,7 +43,6 @@ function distanceToPolygonBoundary(point: [number, number], polygon: [number, nu
     const start = polygon[i];
     const end = polygon[j];
 
-    // Calculate distance from point to line segment
     const x = point[0], y = point[1];
     const x1 = start[0], y1 = start[1];
     const x2 = end[0], y2 = end[1];
@@ -81,24 +80,28 @@ function distanceToPolygonBoundary(point: [number, number], polygon: [number, nu
   return minDistance;
 }
 
-// Simulate terrain favorability based on distance from major infrastructures
+// Calculate terrain favorability based on position and infrastructure density
 function calculateTerrainFavorability(lat: number, lng: number, localityInfo: typeof INDIAN_LOCALITIES[0]): number {
-  // Distance from center indicates infrastructure density
   const distanceFromCenter = Math.sqrt(
     Math.pow(lat - localityInfo.center.lat, 2) + 
     Math.pow(lng - localityInfo.center.lng, 2)
   ) * 111;
 
-  // Terrain favorability decreases with distance from center, but with some randomness
-  const baseFavorability = 100 - (distanceFromCenter * 10);
-  const randomVariation = (Math.random() - 0.5) * 20; // ±10 points variation
+  // Deterministic calculation based on distance from center
+  const baseFavorability = 100 - (distanceFromCenter * 8);
 
-  return Math.max(50, Math.min(100, baseFavorability + randomVariation));
+  // Add variation based on position relative to center
+  const angleFromCenter = Math.atan2(
+    lat - localityInfo.center.lat,
+    lng - localityInfo.center.lng
+  );
+  const positionVariation = Math.cos(angleFromCenter * 4) * 5;
+
+  return Math.max(50, Math.min(100, baseFavorability + positionVariation));
 }
 
 // Calculate environmental interference based on position
 function calculateEnvironmentalInterference(lat: number, lng: number, localityInfo: typeof INDIAN_LOCALITIES[0]): number {
-  // More interference near boundaries and center (urban density)
   const distanceFromBoundary = distanceToPolygonBoundary([lng, lat], localityInfo.bounds.polygon as [number, number][]);
   const distanceFromCenter = Math.sqrt(
     Math.pow(lat - localityInfo.center.lat, 2) + 
@@ -106,13 +109,13 @@ function calculateEnvironmentalInterference(lat: number, lng: number, localityIn
   ) * 111;
 
   // Higher interference in very urban (center) or very rural (boundary) areas
-  const boundaryEffect = Math.max(0, 15 - distanceFromBoundary * 5);
-  const centerEffect = Math.max(0, 20 - distanceFromCenter * 3);
-  const baseInterference = Math.max(boundaryEffect, centerEffect);
+  const boundaryEffect = Math.max(0, 15 - distanceFromBoundary * 4);
+  const centerEffect = Math.max(0, 25 - distanceFromCenter * 3);
 
-  // Add random variation
-  const randomVariation = (Math.random() * 15);
-  return Math.min(50, baseInterference + randomVariation);
+  // Deterministic interference based on position
+  const interference = Math.max(boundaryEffect, centerEffect);
+
+  return Math.min(50, interference);
 }
 
 // Calculate accessibility score based on distance from center and boundaries
@@ -123,81 +126,79 @@ function calculateAccessibility(lat: number, lng: number, localityInfo: typeof I
     Math.pow(lng - localityInfo.center.lng, 2)
   ) * 111;
 
-  // Better accessibility closer to center but not too close to boundaries
-  const baseAccessibility = 90 - (distanceFromCenter * 5);
-  const boundaryPenalty = Math.max(0, 10 - distanceFromBoundary * 2);
+  // Deterministic accessibility calculation
+  const baseAccessibility = 95 - (distanceFromCenter * 6);
+  const boundaryPenalty = Math.max(0, 12 - distanceFromBoundary * 2);
 
-  // Add random variation for real-world factors
-  const randomVariation = (Math.random() - 0.5) * 20;
-
-  return Math.max(50, Math.min(100, baseAccessibility - boundaryPenalty + randomVariation));
+  return Math.max(50, Math.min(100, baseAccessibility - boundaryPenalty));
 }
 
+// Generate a grid of candidate sites within the locality
 function generateCandidateSites(locality: string, numSites = 20): CandidateSite[] {
   const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality)!;
   const sites: CandidateSite[] = [];
   const MINIMUM_BOUNDARY_DISTANCE = 1; // Minimum 1km from boundary
-  let attempts = 0;
 
-  while (sites.length < numSites && attempts < numSites * 10) {
-    attempts++;
+  // Calculate grid dimensions based on locality size
+  const latSpan = localityInfo.bounds.north - localityInfo.bounds.south;
+  const lngSpan = localityInfo.bounds.east - localityInfo.bounds.west;
+  const gridSize = Math.ceil(Math.sqrt(numSites * 4)); // 4x more points than needed
+  const latStep = latSpan / gridSize;
+  const lngStep = lngSpan / gridSize;
 
-    const lat = localityInfo.bounds.south + 
-      Math.random() * (localityInfo.bounds.north - localityInfo.bounds.south);
-    const lng = localityInfo.bounds.west + 
-      Math.random() * (localityInfo.bounds.east - localityInfo.bounds.west);
+  // Generate points in a grid pattern
+  for (let i = 0; i < gridSize && sites.length < numSites * 4; i++) {
+    for (let j = 0; j < gridSize && sites.length < numSites * 4; j++) {
+      const lat = localityInfo.bounds.south + (i + 0.5) * latStep;
+      const lng = localityInfo.bounds.west + (j + 0.5) * lngStep;
 
-    const point: [number, number] = [lng, lat];
-    if (!isPointInPolygon(point, localityInfo.bounds.polygon as [number, number][])) {
-      continue;
-    }
+      const point: [number, number] = [lng, lat];
+      if (!isPointInPolygon(point, localityInfo.bounds.polygon as [number, number][])) {
+        continue;
+      }
 
-    const boundaryDistance = distanceToPolygonBoundary(point, localityInfo.bounds.polygon as [number, number][]);
-    if (boundaryDistance < MINIMUM_BOUNDARY_DISTANCE) {
-      continue;
-    }
+      const boundaryDistance = distanceToPolygonBoundary(point, localityInfo.bounds.polygon as [number, number][]);
+      if (boundaryDistance < MINIMUM_BOUNDARY_DISTANCE) {
+        continue;
+      }
 
-    const distance = Math.sqrt(
-      Math.pow(lat - localityInfo.center.lat, 2) + 
-      Math.pow(lng - localityInfo.center.lng, 2)
-    ) * 111;
+      const distance = Math.sqrt(
+        Math.pow(lat - localityInfo.center.lat, 2) + 
+        Math.pow(lng - localityInfo.center.lng, 2)
+      ) * 111;
 
-    // Calculate site characteristics using more sophisticated methods
-    const terrain = calculateTerrainFavorability(lat, lng, localityInfo);
-    const environment = calculateEnvironmentalInterference(lat, lng, localityInfo);
-    const accessibility = calculateAccessibility(lat, lng, localityInfo);
+      const terrain = calculateTerrainFavorability(lat, lng, localityInfo);
+      const environment = calculateEnvironmentalInterference(lat, lng, localityInfo);
+      const accessibility = calculateAccessibility(lat, lng, localityInfo);
 
-    sites.push({
-      id: sites.length + 1,
-      latitude: lat,
-      longitude: lng,
-      terrain,
-      environment,
-      accessibility,
-      distance,
-      details: {
+      sites.push({
+        id: sites.length + 1,
+        latitude: lat,
+        longitude: lng,
         terrain,
         environment,
         accessibility,
-        distance
-      }
-    });
+        distance,
+        details: {
+          terrain,
+          environment,
+          accessibility,
+          distance
+        }
+      });
+    }
   }
 
   return sites;
 }
 
 function computePerformanceScore(site: CandidateSite): number {
-  // Random variation to simulate real-world uncertainties
-  const noise = (Math.random() - 0.5) * 2;
-
-  // Calculate weighted score using the weights from schema
+  // Deterministic score calculation without random noise
   const score = (
     SITE_SCORE_WEIGHTS.terrain * site.terrain +
     SITE_SCORE_WEIGHTS.accessibility * site.accessibility -
-    SITE_SCORE_WEIGHTS.distance * (site.distance * 5) - // Increased distance penalty
-    SITE_SCORE_WEIGHTS.environment * site.environment +
-    noise
+    SITE_SCORE_WEIGHTS.distance * (site.distance * 5) -
+    SITE_SCORE_WEIGHTS.environment * site.environment
   );
 
   return score;
