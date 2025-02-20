@@ -11,32 +11,111 @@ interface CandidateSite {
   score?: number;
 }
 
+// Check if a point is inside the locality polygon
+function isPointInPolygon(point: [number, number], polygon: [number, number][]): boolean {
+  const x = point[0], y = point[1];
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+
+    const intersect = ((yi > y) !== (yj > y))
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+// Calculate minimum distance from a point to polygon boundary
+function distanceToPolygonBoundary(point: [number, number], polygon: [number, number][]): number {
+  let minDistance = Infinity;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const j = (i + 1) % polygon.length;
+    const start = polygon[i];
+    const end = polygon[j];
+
+    // Calculate distance from point to line segment
+    const x = point[0], y = point[1];
+    const x1 = start[0], y1 = start[1];
+    const x2 = end[0], y2 = end[1];
+
+    const A = x - x1;
+    const B = y - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = -1;
+
+    if (len_sq !== 0) param = dot / len_sq;
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = x - xx;
+    const dy = y - yy;
+    const distance = Math.sqrt(dx * dx + dy * dy) * 111; // Convert to km
+    minDistance = Math.min(minDistance, distance);
+  }
+
+  return minDistance;
+}
+
 function generateCandidateSites(locality: string, numSites = 20): CandidateSite[] {
   const localityInfo = INDIAN_LOCALITIES.find(l => l.id === locality)!;
   const sites: CandidateSite[] = [];
+  const MINIMUM_BOUNDARY_DISTANCE = 1; // Minimum 1km from boundary
+  let attempts = 0;
 
-  for (let i = 0; i < numSites; i++) {
+  while (sites.length < numSites && attempts < numSites * 10) {
+    attempts++;
+
     // Generate random coordinates within locality bounds
     const lat = localityInfo.bounds.south + 
       Math.random() * (localityInfo.bounds.north - localityInfo.bounds.south);
     const lng = localityInfo.bounds.west + 
       Math.random() * (localityInfo.bounds.east - localityInfo.bounds.west);
 
+    // Check if point is inside polygon and far enough from boundary
+    const point: [number, number] = [lng, lat];
+    if (!isPointInPolygon(point, localityInfo.bounds.polygon)) {
+      continue;
+    }
+
+    const boundaryDistance = distanceToPolygonBoundary(point, localityInfo.bounds.polygon);
+    if (boundaryDistance < MINIMUM_BOUNDARY_DISTANCE) {
+      continue;
+    }
+
     // Calculate distance from center (in kilometers)
     const distance = Math.sqrt(
       Math.pow(lat - localityInfo.center.lat, 2) + 
       Math.pow(lng - localityInfo.center.lng, 2)
-    ) * 111; // Approximate conversion to kilometers
+    ) * 111;
 
     // Generate site characteristics based on the Python algorithm
     sites.push({
-      id: i + 1,
+      id: sites.length + 1,
       latitude: lat,
       longitude: lng,
-      terrain: 50 + Math.random() * 50,        // Scale 50-100 (higher is better)
-      environment: Math.random() * 50,         // Scale 0-50 (lower is better)
-      accessibility: 50 + Math.random() * 50,  // Scale 50-100 (higher is better)
-      distance: distance                       // In kilometers (lower is better)
+      terrain: 50 + Math.random() * 50,
+      environment: Math.random() * 50,
+      accessibility: 50 + Math.random() * 50,
+      distance: distance
     });
   }
 
@@ -44,10 +123,7 @@ function generateCandidateSites(locality: string, numSites = 20): CandidateSite[
 }
 
 function computePerformanceScore(site: CandidateSite): number {
-  // Add random noise to mimic real-world variability
-  const noise = (Math.random() - 0.5) * 2; // Random noise between -1 and 1
-
-  // Using the weights from schema.ts
+  const noise = (Math.random() - 0.5) * 2;
   return (
     SITE_SCORE_WEIGHTS.terrain * site.terrain +
     SITE_SCORE_WEIGHTS.accessibility * site.accessibility -

@@ -78,18 +78,25 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
     const updateHeatmap = () => {
       const bounds = map.getBounds();
       const points = [];
-      // Increase step size to reduce point density
       const step = 0.005;
+
+      // Get the current locality's polygon
+      const locality = INDIAN_LOCALITIES.find(l => l.id === towers[0].locality);
+      if (!locality) return;
 
       for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += step) {
         for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += step) {
+          // Skip points outside the locality polygon
+          if (!isPointInPolygon([lng, lat], locality.bounds.polygon)) {
+            continue;
+          }
+
           const signalStrengths = towers.map(tower => calculateSignalStrength(tower, lat, lng));
           const maxSignal = Math.max(...signalStrengths);
-          // Reduce intensity by normalizing over a larger range
           const normalizedIntensity = Math.min((maxSignal + 120) / 140, 0.6);
 
           if (normalizedIntensity > 0.05) {
-            points.push([lat, lng, normalizedIntensity * 0.5]); // Further reduce intensity
+            points.push([lat, lng, normalizedIntensity * 0.5]);
           }
         }
       }
@@ -98,16 +105,16 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
         map.removeLayer(heatmapLayerRef.current);
       }
 
-      heatmapLayerRef.current = L.heatLayer(points, {
-        radius: 30,            // Increased radius
-        blur: 25,             // Increased blur
+      heatmapLayerRef.current = L.heatLayer(points as any, {
+        radius: 30,
+        blur: 25,
         maxZoom: 10,
-        max: 0.1,             // Reduced maximum intensity
-        minOpacity: 0.01,     // Very low minimum opacity
+        max: 0.1,
+        minOpacity: 0.01,
         gradient: {
-          0.0: 'rgba(34, 197, 94, 0.02)',   // Very transparent green
-          0.3: 'rgba(234, 179, 8, 0.015)',  // Almost invisible yellow
-          0.6: 'rgba(255, 128, 128, 0.008)'    // Even lighter and more transparent red
+          0.0: 'rgba(34, 197, 94, 0.02)',
+          0.3: 'rgba(234, 179, 8, 0.015)',
+          0.6: 'rgba(255, 128, 128, 0.008)'
         }
       }).addTo(map);
     };
@@ -122,6 +129,23 @@ function CoverageLayer({ towers }: { towers: Tower[] }) {
   }, [towers, map]);
 
   return null;
+}
+
+// Helper function to check if a point is inside a polygon
+function isPointInPolygon(point: [number, number], polygon: [number, number][]): boolean {
+  const x = point[0], y = point[1];
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+
+    const intersect = ((yi > y) !== (yj > y))
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
 }
 
 function LocalityBoundary({ locality }: { locality?: string }) {
