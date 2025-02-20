@@ -139,13 +139,9 @@ function LocalityBoundary({ locality }: { locality?: string }) {
       properties: {},
       geometry: {
         type: "Polygon",
-        coordinates: [[
-          [localityInfo.bounds.west, localityInfo.bounds.south],
-          [localityInfo.bounds.east, localityInfo.bounds.south],
-          [localityInfo.bounds.east, localityInfo.bounds.north],
-          [localityInfo.bounds.west, localityInfo.bounds.north],
-          [localityInfo.bounds.west, localityInfo.bounds.south],
-        ]]
+        coordinates: [
+          localityInfo.bounds.polygon.map(([lng, lat]) => [lng, lat])
+        ]
       }
     };
 
