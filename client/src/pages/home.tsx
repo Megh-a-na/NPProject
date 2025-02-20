@@ -13,11 +13,22 @@ import { Trash2 } from "lucide-react";
 import { optimizeTowerPlacements } from "@/lib/site-optimization";
 import MapView from "@/components/Map";
 
+interface TowerScore {
+  score: number;
+  details: {
+    terrain: number;
+    environment: number;
+    accessibility: number;
+    distance: number;
+  };
+}
+
 export default function Home() {
   const [selectedLocality, setSelectedLocality] = useState<string>();
   const [towerCount, setTowerCount] = useState<number>(1);
   const [selectedTower, setSelectedTower] = useState<Tower>();
   const { toast } = useToast();
+  const [towerScores, setTowerScores] = useState<Record<number, TowerScore>>({});
 
   const { data: towers = [], isLoading } = useQuery<Tower[]>({
     queryKey: ["/api/towers", selectedLocality],
@@ -88,6 +99,7 @@ export default function Home() {
 
     // Get optimized tower positions
     const positions = optimizeTowerPlacements(selectedLocality, towerCount);
+    const newScores: Record<number, TowerScore> = {};
 
     // Create towers at optimized positions
     for (let i = 0; i < positions.length; i++) {
@@ -102,8 +114,14 @@ export default function Home() {
         longitude: positions[i].longitude,
       };
 
-      await createTowerMutation.mutateAsync(newTower);
+      const tower = await createTowerMutation.mutateAsync(newTower);
+      newScores[tower.id] = {
+        score: positions[i].score,
+        details: positions[i].details
+      };
     }
+
+    setTowerScores(newScores);
   };
 
   const handleClearTowers = () => {
@@ -198,6 +216,7 @@ export default function Home() {
                 selectedTower={selectedTower}
                 onSelectTower={setSelectedTower}
                 locality={selectedLocality}
+                towerScores={towerScores}
               />
             </CardContent>
           </Card>

@@ -7,6 +7,12 @@ interface TowerMarkerProps {
   isSelected: boolean;
   onClick: () => void;
   score?: number;
+  details?: {
+    terrain: number;
+    environment: number;
+    accessibility: number;
+    distance: number;
+  };
 }
 
 const towerIcon = new Icon({
@@ -19,7 +25,7 @@ const towerIcon = new Icon({
   iconAnchor: [12, 24],
 });
 
-export default function TowerMarker({ tower, isSelected, onClick, score }: TowerMarkerProps) {
+export default function TowerMarker({ tower, isSelected, onClick, score, details }: TowerMarkerProps) {
   return (
     <Marker
       position={[Number(tower.latitude), Number(tower.longitude)]}
@@ -39,15 +45,17 @@ export default function TowerMarker({ tower, isSelected, onClick, score }: Tower
               Performance Score: {score.toFixed(2)}
             </p>
           )}
-          <div className="mt-2 text-xs text-gray-500">
-            <p>Based on:</p>
-            <ul className="list-disc list-inside">
-              <li>Terrain favorability</li>
-              <li>Environmental factors</li>
-              <li>Accessibility</li>
-              <li>Distance from center</li>
-            </ul>
-          </div>
+          {details && (
+            <div className="mt-2 text-xs">
+              <p className="font-medium mb-1">Site Characteristics:</p>
+              <ul className="space-y-1 text-gray-600">
+                <li>Terrain Favorability: {details.terrain.toFixed(1)}/100</li>
+                <li>Environmental Impact: {details.environment.toFixed(1)}/50</li>
+                <li>Accessibility: {details.accessibility.toFixed(1)}/100</li>
+                <li>Distance from Center: {details.distance.toFixed(1)} km</li>
+              </ul>
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>
