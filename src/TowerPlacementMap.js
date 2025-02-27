@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Map from 'react-map-gl/mapbox';
 import { Marker, Popup } from 'react-map-gl/mapbox';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
 
 import * as d3 from 'd3'; // Using d3 to read CSV
 
