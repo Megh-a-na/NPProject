@@ -85,27 +85,22 @@
 
 import React, { useState } from 'react';
 
-function SimpleDropdown() {
-  const [selected, setSelected] = useState('');
-
-  const handleChange = (event) => {
-    setSelected(event.target.value);
-  };
+function SimpleDropdown({value,onChange}) {
 
   return (
     <>
     <div>
-      <h4 style={{ marginBottom: '50px', textAlign: 'center' }}>
+      <h4 style={{ marginBottom: '1px', textAlign: 'center' }}>
          Enter number of towers
        </h4>
     </div>
     <div>
     <select 
-      value={selected} 
-      onChange={handleChange}
+      value={value} 
+      onChange={onChange}
       style={{
         width: '87vw',          // take full width of the container
-        height: '5vh',           // height relative to viewport height
+        height: '6.5vh',           // height relative to viewport height
         padding: '1%',
         fontSize: '1rem',        // relative font size
         border: '1px solid #ccc',
@@ -115,9 +110,10 @@ function SimpleDropdown() {
       <option value="" disabled>
         Select Locality
       </option>
-      <option value="option1">Option 1</option>
-      <option value="option2">Option 2</option>
-      <option value="option3">Option 3</option>
+      <option value="Whitefield">Whitefield</option>
+      <option value="Andheri">Andheri</option>
+      <option value="Gurgaon">Gurgaon</option>
+      <option value="Salt Lake">Salt Lake</option>
     </select>
     </div>
     </>

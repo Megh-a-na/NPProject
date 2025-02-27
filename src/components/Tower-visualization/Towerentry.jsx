@@ -53,12 +53,12 @@
 
 import React, { useState } from 'react';
 
-function EntryBox() {
-  const [value, setValue] = useState('');
+function EntryBox({value, onChange}) {
 
-  const handleChange = (event) => {
-    setValue(event.target.value);
-  };
+  // const handleChange = (event) => {
+  //   setValue(event.target.value);
+  // };
+  
 
   return (
     <>
@@ -66,17 +66,17 @@ function EntryBox() {
         flexDirection: 'column',     // stack elements vertically
         alignItems: 'center',
         gap: '1px'}}>
-    <h4 style={{ marginBottom: '50px', textAlign: 'center' }}>
+    <h4 style={{ marginBottom: '5px', textAlign: 'center' }}>
          Enter number of towers
        </h4>
     <input
-      type="text"
+      type="number"
       value={value}
-      onChange={handleChange}
-      placeholder="Enter text here"
+      onChange={onChange}
+      placeholder="Enter number of towers here"
       style={{
         width: '85vw',          // take full width of the container
-        height: '5vh',           // height relative to viewport height
+        height: '2vh',           // height relative to viewport height
         padding: '1%',
         fontSize: '1rem',        // relative font size
         border: '1px solid #ccc',

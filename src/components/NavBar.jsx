@@ -8,7 +8,7 @@ const Navbar = () => {
         top: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#333',
+        backgroundColor: '#015498',
         padding: '1rem',
         zIndex: 1000, // Ensures the navbar is above other content
       }}
