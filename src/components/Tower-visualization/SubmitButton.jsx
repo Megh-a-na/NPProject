@@ -13,7 +13,8 @@ function MyForm({onClick}) {
             padding: '8px 16px', 
             fontSize: '1rem', 
             width: '71vw',
-            marginRight: '1vw'
+            marginRight: '1vw',
+            color: '#ffffff'
         }}>
         Optimize Tower Placement
       </button>

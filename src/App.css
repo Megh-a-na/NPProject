@@ -2,3 +2,6 @@
   display: flex;
   margin-top: -10px; /* adjust as needed */
 }
+html, body {
+  overflow-y: scroll; /* Always show vertical scrollbar */
+}

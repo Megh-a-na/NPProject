@@ -11,7 +11,8 @@ function MyFormClear({onClick}) {
         marginTop:'7px', 
         padding: '8px 16px', 
         fontSize: '1rem', 
-        width: '15vw' 
+        width: '15vw' ,
+        color: '#ffffff'
     }}>
     Clear Towers
   </button>

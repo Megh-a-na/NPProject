@@ -3,6 +3,7 @@ import SimpleDropdown from '../components/Tower-visualization/Localitydropdown';
 import EntryBox from '../components/Tower-visualization/Towerentry';
 import MyForm from '../components/Tower-visualization/SubmitButton';
 import MyFormClear from '../components/Tower-visualization/cleartower';
+import TowerPlacementMap from '../components/Tower-visualization/TowerPlacementMap';
 
 function Towerpagefn() {
     const [dropdownvalue, setDropDownValue] = useState("");
@@ -25,6 +26,7 @@ function Towerpagefn() {
       };
 
     return (
+      <>
         <form
         style={{
             position: 'fixed',           // fixed relative to the viewport
@@ -58,8 +60,9 @@ function Towerpagefn() {
             onClick={handleClear}
         />
       </div>
-      
+      <TowerPlacementMap />
     </form>
+    </>
     );
 }
 
