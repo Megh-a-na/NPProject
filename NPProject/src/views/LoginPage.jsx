@@ -23,21 +23,10 @@ const LoginPage = ({ onLogin, onNavigateToSignup }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Reset error
     setError('');
-    
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      setError("Please enter both email and password");
-      return;
-    }
-    
-    // Set loading state
     setIsLoading(true);
     
     try {
-      // Send login request to backend
       const response = await fetch('http://127.0.0.1:5000/api/login', {
         method: 'POST',
         headers: {
@@ -55,11 +44,14 @@ const LoginPage = ({ onLogin, onNavigateToSignup }) => {
         throw new Error(data.message || 'Login failed');
       }
       
-      // If successful, log in the user
-      console.log('User logged in:', data.user.email);
+      // Store user data in localStorage
+      localStorage.setItem('authData', JSON.stringify({
+        email: formData.email,
+        isAuthenticated: true
+      }));
       
-      // Navigate to main page with user info
-      onLogin(data.user.email);
+      // Call the onLogin handler
+      onLogin(formData.email);
       
     } catch (error) {
       console.error('Login error:', error);
