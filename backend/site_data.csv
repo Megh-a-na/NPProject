@@ -1,0 +1,2 @@
+District,Subdistrict,Site_ID,Latitude,Longitude,AQI,Distance_km,Accessibility,Terrain,Environmental_Interference,AQI_Score,Distance_Score,Accessibility_Score,Environmental_Score,Total_Score
+Bangalore Urban,Whitefield,WHI6734,12.990879454763027,77.73887926357774,174.83570765056163,6.964574916377072,7,Urban,8,6.503285846988768,5.356950055748619,7,3,5.489894683334908

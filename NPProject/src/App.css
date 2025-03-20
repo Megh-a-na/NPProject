@@ -1,0 +1,9 @@
+.dropdown-container {
+  display: flex;
+  margin-top: -10px; /* adjust as needed */
+}
+
+html, body {
+  height: 100%; /* Ensure the html and body take full height */
+  overflow-y: auto; /* Ensure this line is present to enable vertical scrolling */
+}
