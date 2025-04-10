@@ -91,7 +91,7 @@ function SimpleDropdown({value,onChange}) {
     <>
     <div>
       <h4 style={{ marginBottom: '1px', textAlign: 'center' }}>
-         Enter number of towers
+         Choose Locality
        </h4>
     </div>
     <div>
@@ -110,10 +110,41 @@ function SimpleDropdown({value,onChange}) {
       <option value="" disabled>
         Select Locality
       </option>
-      <option value="Whitefield">Whitefield</option>
       <option value="Andheri">Andheri</option>
+      <option value="Anna Nagar">Anna Nagar</option>
+      <option value="Banashankari">Banashankari</option>
+      <option value="Bandra">Bandra</option>
+      <option value="Banjara Hills">Banjara Hills</option>
+      <option value="BTM Layout">BTM Layout</option>
+      <option value="Chandni Chowk">Chandni Chowk</option>
+      <option value="Colaba">Colaba</option>
+      <option value="Connaught Place">Connaught Place</option>
+      <option value="Dadar">Dadar</option>
+      <option value="Dwarka">Dwarka</option>
       <option value="Gurgaon">Gurgaon</option>
+      <option value="Greater Kailash">Greater Kailash</option>
+      <option value="Hebbal">Hebbal</option>
+      <option value="HSR Layout">HSR Layout</option>
+      <option value="Indiranagar">Indiranagar</option>
+      <option value="Jayanagar">Jayanagar</option>
+      <option value="Jubilee Hills">Jubilee Hills</option>
+      <option value="Khar">Khar</option>
+      <option value="Koramangala">Koramangala</option>
+      <option value="Lajpat Nagar">Lajpat Nagar</option>
+      <option value="Malleshwaram">Malleshwaram</option>
+      <option value="Mulund">Mulund</option>
+      <option value="Noida Sector 18">Noida Sector 18</option>
+      <option value="Parel">Parel</option>
+      <option value="Rohini">Rohini</option>
       <option value="Salt Lake">Salt Lake</option>
+      <option value="Secunderabad">Secunderabad</option>
+      <option value="Sector 18">Sector 18</option>
+      <option value="South Extension">South Extension</option>
+      <option value="Vashi">Vashi</option>
+      <option value="Viman Nagar">Viman Nagar</option>
+      <option value="Whitefield">Whitefield</option>
+
+
     </select>
     </div>
     </>

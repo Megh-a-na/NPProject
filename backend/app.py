@@ -14,8 +14,11 @@ DATA_FILE = "site_data.csv"
 
 # Ensure data file exists
 if not os.path.exists(DATA_FILE):
+    print ('1st time running, generating data...')
     df = generate_site_data()
     df.to_csv(DATA_FILE, index=False)
+else:
+    print ('Data file already exists, skipping generation.')
 
 
 @app.route("/")

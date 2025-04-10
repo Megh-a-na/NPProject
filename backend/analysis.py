@@ -63,5 +63,5 @@ def filter_sites(df, min_score=0, terrain=None, max_distance=None):
     return filtered_df
 
 
-sites = generate_site_data()
-print(get_top_sites(sites, 'Salt Lake',4))
+# sites = generate_site_data()
+# print(get_top_sites(sites, 'Salt Lake',4))
