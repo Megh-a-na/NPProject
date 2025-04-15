@@ -46,10 +46,9 @@ const fetchIndianLocationData = async (latitude, longitude) => {
     }
 };
 
-export default function TowerPlacementMap({ towerLocations }) {
+export default function TowerPlacementMap({ towerLocations, selectedLocation, setSelectedLocation }) {
     const [csvLocations, setCsvLocations] = useState([]);
     const [apiLocations, setApiLocations] = useState([]);
-    const [selectedLocation, setSelectedLocation] = useState(null);
     const [viewState, setViewState] = useState({
         longitude: 88.41,
         latitude: 22.58,
@@ -142,9 +141,12 @@ export default function TowerPlacementMap({ towerLocations }) {
                         <div style={{ 
                             fontSize: "24px", 
                             cursor: "pointer",
-                            color: location.source === "CSV" ? "#1E88E5" : "#E53935" 
+                            color: location.source === "CSV" ? "#1E88E5" : 
+                                  (location.isWater ? "#00BCD4" : "#E53935") 
                         }}>
-                            {location.source === "CSV" ? "🔹" : "📍"}
+                            {location.source === "CSV" ? "🔹" : 
+                             (location.isWater ? "🌊" : 
+                             (location.relocated ? "🏠" : "📍"))}
                         </div>
                     </Marker>
                 ))}
@@ -180,6 +182,12 @@ export default function TowerPlacementMap({ towerLocations }) {
                                 {selectedLocation.address && (
                                     <p style={{ margin: '5px 0' }}><strong>Address:</strong> {selectedLocation.address}</p>
                                 )}
+                                {selectedLocation.isWater && (
+                                    <p style={{ margin: '5px 0', color: '#00838F' }}><strong>Note:</strong> This location is in or near water</p>
+                                )}
+                                {selectedLocation.relocated && (
+                                    <p style={{ margin: '5px 0', color: '#2E7D32' }}><strong>Relocated:</strong> This tower was moved from water to land</p>
+                                )}
                                 
                                 {selectedLocation.urbanData && (
                                     <div style={{ borderTop: '1px solid #ccc', marginTop: '10px', paddingTop: '10px' }}>
@@ -210,7 +218,7 @@ export default function TowerPlacementMap({ towerLocations }) {
                 <p>
                     Displaying {allLocations.length} locations
                 </p>
-                <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
                     <div style={{ display: "flex", alignItems: "center" }}>
                         <span style={{ fontSize: "24px", color: "#E53935", marginRight: "5px" }}>📍</span>
                         <span>Optimised Tower Placement</span>
@@ -218,6 +226,14 @@ export default function TowerPlacementMap({ towerLocations }) {
                     <div style={{ display: "flex", alignItems: "center" }}>
                         <span style={{ fontSize: "24px", color: "#1E88E5", marginRight: "5px" }}>🔹</span>
                         <span>CSV Sites</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                        <span style={{ fontSize: "24px", color: "#00BCD4", marginRight: "5px" }}>🌊</span>
+                        <span>Water Location</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                        <span style={{ fontSize: "24px", color: "#E53935", marginRight: "5px" }}>🏠</span>
+                        <span>Relocated from Water</span>
                     </div>
                 </div>
             </div>

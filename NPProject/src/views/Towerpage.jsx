@@ -11,6 +11,7 @@ function Towerpagefn() {
     const [towerLocations, setTowerLocations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [generatedLocations, setGeneratedLocations] = useState({}); // Store generated locations
+    const [selectedLocation, setSelectedLocation] = useState(null); // Track selected location for map popups
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -103,10 +104,13 @@ function Towerpagefn() {
 
     const handleClear = (e) => {
         e.preventDefault();
+        // Close any open popup in the map
+        setSelectedLocation(null);
+        // Clear form values and tower locations
         setTowerValue("");
         setDropDownValue("");
         setTowerLocations([]);
-        console.log("Tower value cleared");
+        console.log("Tower value cleared and map popup closed");
     };
 
     return (
@@ -153,7 +157,11 @@ function Towerpagefn() {
               {/* You could add a spinner here if desired */}
           </div>
       )}
-      <TowerPlacementMap towerLocations={towerLocations} />
+      <TowerPlacementMap 
+        towerLocations={towerLocations} 
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+      />
     </form>
     </>
     );

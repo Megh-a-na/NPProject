@@ -15,8 +15,37 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
     return distance
 
+import math
+
+def tower_score(PD, RA, CP):
+    """
+    Calculate tower score based on population density, coverage radius, and capacity parameters.
+    
+    Parameters:
+    PD (float): Population Density (people per sq km)
+    RA (float): Coverage Radius (km)
+    CP (float): Capacity Parameter (maximum number of users the tower can serve)
+    
+    Returns:
+    float: Score between 0 and 100
+    """
+    EP = PD * (math.pi * RA ** 2)  # Estimated Population in coverage area
+    UR = EP / CP  # Utilization Ratio
+    
+    if 0.5 <= UR <= 1.0:
+        score = 100 * UR
+    elif UR < 0.5:
+        score = 80 * UR
+    else:
+        score = 100 - 50 * (UR - 1.0)
+    
+    return max(0, min(100, round(score, 2)))
+
 def get_top_sites(df, subdistrict=None, n=10, min_distance=3.0):
     print(f"Received request for {n} sites in {subdistrict}")  # Debug line
+    
+    # Import water detection module
+    from water_detection import is_in_water, get_nearest_land_point
     
     if subdistrict:
         filtered_df = df[df['Subdistrict'] == subdistrict].copy()
@@ -27,13 +56,65 @@ def get_top_sites(df, subdistrict=None, n=10, min_distance=3.0):
     
     if len(filtered_df) == 0:
         return pd.DataFrame()
-
-    # Sort by Total_Score in descending order
-    filtered_df = filtered_df.sort_values('Total_Score', ascending=False)
     
-    # Simplified approach: Just return the top n sites by score
-    # This bypasses complex distance calculations for debugging
+    # Calculate enhanced score incorporating population density
+    # Assume standard coverage radius and capacity parameters
+    coverage_radius = 2.0  # 2 km radius
+    capacity_parameter = 5000  # Can serve 5000 users
+    
+    # Calculate enhanced score for each site
+    filtered_df['Enhanced_Score'] = filtered_df.apply(
+        lambda row: (
+            # Base score (70% weight)
+            0.7 * row['Total_Score'] + 
+            # Population density score (30% weight)
+            0.3 * tower_score(row['Population_Density'], coverage_radius, capacity_parameter)
+        ),
+        axis=1
+    )
+    
+    # Check for water bodies and adjust coordinates if needed
+    water_locations = []
+    for idx, row in filtered_df.iterrows():
+        if is_in_water(row['Latitude'], row['Longitude']):
+            print(f"Site {row['Site_ID']} is in water. Finding nearest land point...")
+            new_lat, new_lon = get_nearest_land_point(row['Latitude'], row['Longitude'])
+            
+            if (new_lat, new_lon) != (row['Latitude'], row['Longitude']):
+                # Found a land point nearby, update coordinates
+                filtered_df.at[idx, 'Latitude'] = new_lat
+                filtered_df.at[idx, 'Longitude'] = new_lon
+                # Mark as relocated for frontend display and cost calculations
+                filtered_df.at[idx, 'Relocated'] = True
+                # Apply a small score penalty for relocated sites (more expensive to build)
+                filtered_df.at[idx, 'Enhanced_Score'] = max(0, filtered_df.at[idx, 'Enhanced_Score'] - 0.5)
+                print(f"Moved site to land at {new_lat}, {new_lon}")
+            else:
+                # Couldn't find a nearby land point, mark for removal
+                water_locations.append(idx)
+                print(f"Could not find nearby land for site {row['Site_ID']}. Will be excluded.")
+    
+    # Remove sites that are in water and couldn't be relocated
+    if water_locations:
+        filtered_df = filtered_df.drop(water_locations)
+        print(f"Removed {len(water_locations)} sites that were in water bodies")
+        
+    # If we've removed too many sites, we might need to expand our search area
+    if len(filtered_df) < n * 1.5:  # Ensure we have at least 1.5x the requested number of sites
+        print(f"Not enough sites after water filtering. Expanding search area...")
+        # This would be a good place to implement a more sophisticated search strategy
+        # For now, we'll just continue with what we have
+    
+    # Sort by Enhanced_Score in descending order
+    filtered_df = filtered_df.sort_values('Enhanced_Score', ascending=False)
+    
+    # Get top n sites, ensuring we have enough after water filtering
     top_sites = filtered_df.head(n)
+    
+    # If we don't have enough sites after filtering water locations,
+    # we might need to get more sites from other areas
+    if len(top_sites) < n and len(filtered_df) < n:
+        print(f"Warning: Only found {len(top_sites)} valid sites after water filtering")
     
     print(f"Returning {len(top_sites)} sites")  # Debug line
     return top_sites

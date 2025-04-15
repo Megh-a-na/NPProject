@@ -62,8 +62,35 @@ def get_optimized_sites():
         # Convert to a list of dictionaries for JSON response
         result = optimized_sites.to_dict(orient="records")
         
-        print(f"Returning {len(result)} sites")  # Debug line
-        return jsonify(result)
+        # Format the response for the frontend
+        formatted_result = []
+        for site in result:
+            # Use Enhanced_Score as the main score if available
+            score = site.get('Enhanced_Score', site.get('Total_Score', 0))
+            
+            # Check if this location is in water (for informational purposes)
+            from water_detection import is_in_water
+            in_water = is_in_water(site.get('Latitude'), site.get('Longitude'))
+            
+            # Apply a score penalty for sites that are still in water (should be rare)
+            if in_water:
+                score = max(0, score - 2.0)  # 2-point penalty for water locations
+            
+            formatted_result.append({
+                'siteID': site.get('Site_ID', f"{subdistrict[:3].upper()}{len(formatted_result)+1}"),
+                'latitude': site.get('Latitude'),
+                'longitude': site.get('Longitude'),
+                'score': score,
+                'region': site.get('Subdistrict'),
+                'district': site.get('District'),
+                'populationDensity': site.get('Population_Density'),
+                'source': "API",
+                'isWater': in_water,  # Include water status in the response
+                'relocated': site.get('Relocated', False)  # Indicate if site was relocated from water
+            })
+        
+        print(f"Returning {len(formatted_result)} sites")  # Debug line
+        return jsonify(formatted_result)
     except Exception as e:
         print(f"Error: {str(e)}")  # Debug line
         return jsonify({"error": str(e)}), 500
