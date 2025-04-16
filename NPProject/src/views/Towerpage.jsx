@@ -3,15 +3,108 @@ import SimpleDropdown from '../components/Tower-visualization/Localitydropdown';
 import EntryBox from '../components/Tower-visualization/Towerentry';
 import MyForm from '../components/Tower-visualization/SubmitButton';
 import MyFormClear from '../components/Tower-visualization/cleartower';
+import DownloadReportButton from '../components/Tower-visualization/DownloadReportButton';
 import TowerPlacementMap from '../components/Tower-visualization/TowerPlacementMap';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+// Add the fetchIndianLocationData function
+const fetchIndianLocationData = async (latitude, longitude) => {
+    // Mock data for testing
+    return {
+        landUse: 'Urban',
+        populationDensity: Math.floor(Math.random() * 10000) + 1000,
+        avgBuildingHeight: Math.floor(Math.random() * 20) + 5,
+        recommendedHeight: Math.floor(Math.random() * 30) + 20,
+        isWater: Math.random() > 0.8,
+        relocated: Math.random() > 0.9
+    };
+};
+
+// Add the fetchCostEstimates function
+const fetchCostEstimates = async (siteData) => {
+    // Base costs from the popup
+    const baseTowerCost = 50000;
+    const baseEquipmentCost = 30000;
+    const baseInstallationCost = 20000;
+    const baseBackhaulCost = 15000;
+    
+    const baseLeaseCost = 12000;
+    const baseMaintenanceCost = 8000;
+    const basePowerCost = 6000;
+    const baseBackhaulOpex = 10000;
+    
+    // Terrain multipliers from the popup
+    const terrainMultiplier = {
+        'urban': 1.0,
+        'suburban': 1.1,
+        'rural': 1.2,
+        'flat': 1.0,
+        'hilly': 1.2,
+        'mountainous': 1.5
+    };
+    
+    // Accessibility multipliers from the popup
+    const accessibilityMultiplier = {
+        'easy': 1.0,
+        'moderate': 1.1,
+        'difficult': 1.3
+    };
+    
+    // Get terrain and accessibility from site data
+    const terrain = siteData.Terrain?.toLowerCase() || 'urban';
+    const accessibility = siteData.Accessibility?.toLowerCase() || 'moderate';
+    
+    // Calculate CAPEX (same as popup)
+    const towerCost = baseTowerCost * terrainMultiplier[terrain];
+    const equipmentCost = baseEquipmentCost;
+    const installationCost = baseInstallationCost * accessibilityMultiplier[accessibility];
+    const backhaulCost = baseBackhaulCost;
+    
+    const totalCapex = towerCost + equipmentCost + installationCost + backhaulCost;
+    
+    // Calculate OPEX (same as popup)
+    const leaseCost = baseLeaseCost;
+    const maintenanceCost = baseMaintenanceCost * terrainMultiplier[terrain];
+    const powerCost = basePowerCost;
+    const backhaulOpex = baseBackhaulOpex;
+    
+    const totalOpex = leaseCost + maintenanceCost + powerCost + backhaulOpex;
+    
+    // Calculate total first year cost (same as popup)
+    const totalFirstYearCost = totalCapex + totalOpex;
+    
+    return {
+        capex: {
+            breakdown: {
+                tower_cost: towerCost,
+                equipment_cost: equipmentCost,
+                installation_cost: installationCost,
+                backhaul_cost: backhaulCost
+            },
+            total_capex: totalCapex
+        },
+        opex: {
+            breakdown: {
+                lease_cost: leaseCost,
+                maintenance_cost: maintenanceCost,
+                power_cost: powerCost,
+                backhaul_cost: backhaulOpex
+            },
+            total_opex: totalOpex
+        },
+        total_first_year_cost: totalFirstYearCost
+    };
+};
 
 function Towerpagefn() {
     const [dropdownvalue, setDropDownValue] = useState("");
     const [towervalue, setTowerValue] = useState("");
     const [towerLocations, setTowerLocations] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [generatedLocations, setGeneratedLocations] = useState({}); // Store generated locations
-    const [selectedLocation, setSelectedLocation] = useState(null); // Track selected location for map popups
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [generatedLocations, setGeneratedLocations] = useState({});
+    const [selectedLocation, setSelectedLocation] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -113,57 +206,229 @@ function Towerpagefn() {
         console.log("Tower value cleared and map popup closed");
     };
 
+    const generatePDFReport = async (reportData) => {
+        try {
+            const doc = new jsPDF();
+            doc.setFontSize(14);
+            doc.setTextColor(41, 128, 185);
+
+            // Title
+            doc.text(`Tower Placement Report - ${dropdownvalue}`, 20, 20);
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+            doc.text(`Number of Towers: ${towerLocations.length}`, 20, 40);
+
+            let yPos = 60;
+
+            // For each tower location
+            for (const { siteData, costEstimates } of reportData) {
+                // Site Information
+                doc.setFontSize(13);
+                doc.setTextColor(41, 128, 185);
+                doc.text(`Site ID: ${siteData.siteID}`, 20, yPos);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                
+                // Location Details
+                doc.text(`Coordinates: ${siteData.latitude.toFixed(6)}°, ${siteData.longitude.toFixed(6)}°`, 25, yPos + 10);
+                if (siteData.score) {
+                    doc.text(`Optimization Score: ${siteData.score.toFixed(2)}`, 25, yPos + 20);
+                }
+                
+                // Urban Data
+                if (siteData.urbanData) {
+                    doc.text(`Land Use: ${siteData.urbanData.landUse}`, 25, yPos + 30);
+                    doc.text(`Population Density: ${siteData.urbanData.populationDensity}/km²`, 25, yPos + 40);
+                    doc.text(`Average Building Height: ${siteData.urbanData.avgBuildingHeight}m`, 25, yPos + 50);
+                    doc.text(`Recommended Tower Height: ${siteData.urbanData.recommendedHeight}m`, 25, yPos + 60);
+                }
+
+                // Cost Analysis
+                if (costEstimates) {
+                    doc.setFontSize(12);
+                    doc.setTextColor(41, 128, 185);
+                    doc.text('Cost Analysis', 20, yPos + 75);
+                    
+                    doc.setFontSize(11);
+                    doc.setTextColor(0, 0, 0);
+
+                    // CAPEX Table
+                    const capexData = [
+                        ['Component', 'Cost (₹)'],
+                        ['Tower Cost', costEstimates.capex.breakdown.tower_cost.toLocaleString()],
+                        ['Equipment Cost', costEstimates.capex.breakdown.equipment_cost.toLocaleString()],
+                        ['Installation Cost', costEstimates.capex.breakdown.installation_cost.toLocaleString()],
+                        ['Backhaul Cost', costEstimates.capex.breakdown.backhaul_cost.toLocaleString()],
+                        ['Total CAPEX', costEstimates.capex.total_capex.toLocaleString()]
+                    ];
+
+                    autoTable(doc, {
+                        startY: yPos + 80,
+                        head: [['CAPEX Breakdown', 'Amount (₹)']],
+                        body: capexData.slice(1),
+                        theme: 'striped',
+                        headStyles: { fillColor: [41, 128, 185] },
+                        margin: { left: 25 },
+                        width: 160
+                    });
+
+                    // OPEX Table
+                    const opexData = [
+                        ['Component', 'Cost (₹)'],
+                        ['Lease Cost', costEstimates.opex.breakdown.lease_cost.toLocaleString()],
+                        ['Maintenance Cost', costEstimates.opex.breakdown.maintenance_cost.toLocaleString()],
+                        ['Power Cost', costEstimates.opex.breakdown.power_cost.toLocaleString()],
+                        ['Backhaul Cost', costEstimates.opex.breakdown.backhaul_cost.toLocaleString()],
+                        ['Total OPEX', costEstimates.opex.total_opex.toLocaleString()]
+                    ];
+
+                    autoTable(doc, {
+                        startY: doc.lastAutoTable.finalY + 10,
+                        head: [['Annual OPEX Breakdown', 'Amount (₹)']],
+                        body: opexData.slice(1),
+                        theme: 'striped',
+                        headStyles: { fillColor: [41, 128, 185] },
+                        margin: { left: 25 },
+                        width: 160
+                    });
+
+                    // Total First Year Cost
+                    doc.setFontSize(12);
+                    doc.setTextColor(41, 128, 185);
+                    doc.text(`Total First Year Cost: ₹${costEstimates.total_first_year_cost.toLocaleString()}`, 25, doc.lastAutoTable.finalY + 20);
+                }
+
+                // Special Notes
+                if (siteData.isWater || siteData.relocated) {
+                    doc.setFontSize(11);
+                    doc.setTextColor(0, 0, 0);
+                    let noteText = '';
+                    if (siteData.isWater) {
+                        noteText += '* This location is in or near water\n';
+                    }
+                    if (siteData.relocated) {
+                        noteText += '* This tower was relocated from water to land';
+                    }
+                    doc.text(noteText, 25, doc.lastAutoTable.finalY + 30);
+                }
+
+                // Add a new page if there's another tower to document
+                if (reportData.indexOf({ siteData, costEstimates }) < reportData.length - 1) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+            }
+
+            // Save the PDF
+            doc.save(`tower_placement_report_${dropdownvalue}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            throw error;
+        }
+    };
+
+    const handleDownloadReport = async () => {
+        if (towerLocations.length === 0) {
+            alert("No tower locations to generate report for");
+            return;
+        }
+
+        setIsGeneratingReport(true);
+
+        try {
+            // Collect all site data and cost estimates using the same data as shown in the popup
+            const reportData = await Promise.all(
+                towerLocations.map(async (location) => {
+                    // Get the urban data for this location
+                    const urbanData = await fetchIndianLocationData(location.latitude, location.longitude);
+                    
+                    // Create the site data object using the exact same structure as in the popup
+                    const siteData = {
+                        ...location,
+                        urbanData: urbanData,
+                        Terrain: urbanData.landUse.toLowerCase(),
+                        Accessibility: 'moderate'
+                    };
+                    
+                    // Get cost estimates using the same function as the popup
+                    const costEstimates = await fetchCostEstimates(siteData);
+                    
+                    return {
+                        siteData,
+                        costEstimates
+                    };
+                })
+            );
+
+            // Generate the PDF report with the collected data
+            generatePDFReport(reportData);
+        } catch (error) {
+            console.error("Error generating report:", error);
+            alert("An error occurred while generating the report. Please check the console for details.");
+        } finally {
+            setIsGeneratingReport(false);
+        }
+    };
+
     return (
-      <>
-        <form
-        style={{
-            margin: '10vh auto',          // Center the form with margin
-            width: '90vw',               // container width is 90% of viewport width
-            maxWidth: '600px',           // limit maximum width
-            display: 'flex',
-            flexDirection: 'column',     // stack elements vertically
-            alignItems: 'center',
-            gap: '5px'                  // fixed gap between elements (50px)
-        }}
-    >
-      <SimpleDropdown 
-        value={dropdownvalue}
-        onChange={(e) => setDropDownValue(e.target.value)} 
-      />
-      <EntryBox 
-        value={towervalue}
-        onChange={(e) => setTowerValue(e.target.value)}
-      />
-      <div
-      style={{display: 'flex',
-      flexDirection: 'row'}}
-      >
-        <MyForm
-            onClick={handleSubmit}
-            disabled={isLoading}
-        />
-        <MyFormClear
-            onClick={handleClear}
-            disabled={isLoading}
-        />
-      </div>
-      {isLoading && (
-          <div style={{ 
-              margin: '20px auto', 
-              textAlign: 'center',
-              color: '#015498'
-          }}>
-              <p>Optimizing tower placement... Please wait.</p>
-              {/* You could add a spinner here if desired */}
-          </div>
-      )}
-      <TowerPlacementMap 
-        towerLocations={towerLocations} 
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-      />
-    </form>
-    </>
+        <>
+            <form
+                style={{
+                    margin: '10vh auto',
+                    width: '90vw',
+                    maxWidth: '600px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '5px'
+                }}
+            >
+                <SimpleDropdown 
+                    value={dropdownvalue}
+                    onChange={(e) => setDropDownValue(e.target.value)} 
+                />
+                <EntryBox 
+                    value={towervalue}
+                    onChange={(e) => setTowerValue(e.target.value)}
+                />
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '10px',
+                    width: '100%',
+                    justifyContent: 'center'
+                }}>
+                    <MyForm
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                    />
+                    <MyFormClear
+                        onClick={handleClear}
+                        disabled={isLoading}
+                    />
+                    <DownloadReportButton
+                        onClick={handleDownloadReport}
+                        disabled={isGeneratingReport || towerLocations.length === 0}
+                    />
+                </div>
+                {isLoading && (
+                    <div style={{ 
+                        margin: '20px auto', 
+                        textAlign: 'center',
+                        color: '#015498'
+                    }}>
+                        <p>Optimizing tower placement... Please wait.</p>
+                    </div>
+                )}
+                <TowerPlacementMap 
+                    towerLocations={towerLocations} 
+                    selectedLocation={selectedLocation}
+                    setSelectedLocation={setSelectedLocation}
+                />
+            </form>
+        </>
     );
 }
 

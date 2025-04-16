@@ -46,9 +46,35 @@ const fetchIndianLocationData = async (latitude, longitude) => {
     }
 };
 
+// Function to fetch cost estimates
+const fetchCostEstimates = async (siteData) => {
+    try {
+        const response = await fetch(`${API_URL}/api/cost-estimate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                site_data: siteData,
+                tower_type: 'standard' // Default to standard tower type
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch cost estimates');
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching cost estimates:", error);
+        return null;
+    }
+};
+
 export default function TowerPlacementMap({ towerLocations, selectedLocation, setSelectedLocation }) {
     const [csvLocations, setCsvLocations] = useState([]);
     const [apiLocations, setApiLocations] = useState([]);
+    const [costEstimates, setCostEstimates] = useState(null);
     const [viewState, setViewState] = useState({
         longitude: 88.41,
         latitude: 22.58,
@@ -132,8 +158,17 @@ export default function TowerPlacementMap({ towerLocations, selectedLocation, se
                             e.originalEvent?.stopPropagation();
                             if (selectedLocation && selectedLocation === location) {
                                 setSelectedLocation(null);
+                                setCostEstimates(null);
                             } else {
                                 const locationData = await fetchIndianLocationData(location.latitude, location.longitude);
+                                const siteData = {
+                                    ...location,
+                                    ...locationData,
+                                    Terrain: locationData.landUse.toLowerCase(),
+                                    Accessibility: 'moderate' // Default value
+                                };
+                                const estimates = await fetchCostEstimates(siteData);
+                                setCostEstimates(estimates);
                                 setSelectedLocation({ ...location, urbanData: locationData });
                             }
                         }}
@@ -156,7 +191,10 @@ export default function TowerPlacementMap({ towerLocations, selectedLocation, se
                         longitude={selectedLocation.longitude}
                         latitude={selectedLocation.latitude}
                         anchor="bottom"
-                        onClose={() => setSelectedLocation(null)}
+                        onClose={() => {
+                            setSelectedLocation(null);
+                            setCostEstimates(null);
+                        }}
                         closeButton={true}
                         className="custom-popup"
                     >
@@ -170,7 +208,7 @@ export default function TowerPlacementMap({ towerLocations, selectedLocation, se
                         </style>
                         <div style={{ padding: '10px', fontFamily: 'Arial, sans-serif' }}>
                             <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>
-                                {selectedLocation.source === "API" ? `Tower ${selectedLocation.siteID}` : selectedLocation.siteID || "Tower Location"}
+                                {selectedLocation.siteID || 'Tower Site'}
                             </h3>
                             <div style={{ fontSize: '14px', color: '#666' }}>
                                 <p style={{ margin: '5px 0' }}><strong>Latitude:</strong> {selectedLocation.latitude.toFixed(6)}°</p>
@@ -192,9 +230,6 @@ export default function TowerPlacementMap({ towerLocations, selectedLocation, se
                                 {selectedLocation.urbanData && (
                                     <div style={{ borderTop: '1px solid #ccc', marginTop: '10px', paddingTop: '10px' }}>
                                         <p style={{ margin: '5px 0' }}>
-                                            <strong>Building Density:</strong> {selectedLocation.urbanData.buildingCount} structures nearby
-                                        </p>
-                                        <p style={{ margin: '5px 0' }}>
                                             <strong>Land Use:</strong> {selectedLocation.urbanData.landUse}
                                         </p>
                                         <p style={{ margin: '5px 0' }}>
@@ -206,6 +241,37 @@ export default function TowerPlacementMap({ towerLocations, selectedLocation, se
                                         <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#2E7D32' }}>
                                             <strong>Recommended Tower Height:</strong> {selectedLocation.urbanData.recommendedHeight}m
                                         </p>
+                                    </div>
+                                )}
+
+                                {costEstimates && (
+                                    <div style={{ borderTop: '1px solid #ccc', marginTop: '10px', paddingTop: '10px' }}>
+                                        <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>Cost Analysis (₹)</h4>
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <p style={{ margin: '5px 0', fontWeight: 'bold' }}>Initial Investment (CAPEX):</p>
+                                            <div style={{ marginLeft: '15px' }}>
+                                                <p style={{ margin: '3px 0' }}>Tower Cost: ₹{costEstimates.capex.breakdown.tower_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Equipment Cost: ₹{costEstimates.capex.breakdown.equipment_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Installation Cost: ₹{costEstimates.capex.breakdown.installation_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Backhaul Cost: ₹{costEstimates.capex.breakdown.backhaul_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '5px 0', fontWeight: 'bold' }}>Total CAPEX: ₹{costEstimates.capex.total_capex.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: '5px 0', fontWeight: 'bold' }}>Annual Operating Cost (OPEX):</p>
+                                            <div style={{ marginLeft: '15px' }}>
+                                                <p style={{ margin: '3px 0' }}>Lease Cost: ₹{costEstimates.opex.breakdown.lease_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Maintenance Cost: ₹{costEstimates.opex.breakdown.maintenance_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Power Cost: ₹{costEstimates.opex.breakdown.power_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '3px 0' }}>Backhaul Cost: ₹{costEstimates.opex.breakdown.backhaul_cost.toLocaleString()}</p>
+                                                <p style={{ margin: '5px 0', fontWeight: 'bold' }}>Total Annual OPEX: ₹{costEstimates.opex.total_opex.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #ccc' }}>
+                                            <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#2E7D32' }}>
+                                                Total First Year Cost: ₹{(costEstimates.capex.total_capex + costEstimates.opex.total_opex).toLocaleString()}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>

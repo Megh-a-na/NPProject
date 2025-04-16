@@ -12,10 +12,16 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.11.10",
     "@mui/material": "^6.4.5",
-    "mapbox-gl": "^3.10.0",
+    "@types/file-saver": "^2.0.7",
     "d3": "^7.9.0",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
     "jsonpointer": "^5.0.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "mapbox-gl": "^3.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-map-gl": "^7.0.19"
