@@ -170,12 +170,18 @@ function Towerpagefn() {
                 const latOffset = (Math.random() - 0.5) * 0.05;
                 const lngOffset = (Math.random() - 0.5) * 0.05;
 
+                // Generate urban data once per location
+                const urbanData = await fetchIndianLocationData(base.lat + latOffset, base.lng + lngOffset);
+                
                 testData.push({
                     latitude: base.lat + latOffset,
                     longitude: base.lng + lngOffset,
                     siteID: `Test-${i + 1}`,
                     score: 8.5 - (i * 0.2),
-                    source: "API"
+                    source: "API",
+                    urbanData: urbanData, // Store urban data with location
+                    Terrain: urbanData.landUse.toLowerCase(),
+                    Accessibility: 'moderate'
                 });
             }
 
@@ -341,15 +347,12 @@ function Towerpagefn() {
             // Collect all site data and cost estimates using the same data as shown in the popup
             const reportData = await Promise.all(
                 towerLocations.map(async (location) => {
-                    // Get the urban data for this location
-                    const urbanData = await fetchIndianLocationData(location.latitude, location.longitude);
-                    
-                    // Create the site data object using the exact same structure as in the popup
+                                    // Use the stored urban data
                     const siteData = {
                         ...location,
-                        urbanData: urbanData,
-                        Terrain: urbanData.landUse.toLowerCase(),
-                        Accessibility: 'moderate'
+                        urbanData: location.urbanData,
+                        Terrain: location.Terrain,
+                        Accessibility: location.Accessibility
                     };
                     
                     // Get cost estimates using the same function as the popup

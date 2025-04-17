@@ -56,6 +56,38 @@ def get_top_sites(df, subdistrict=None, n=10, min_distance=3.0):
     
     if len(filtered_df) == 0:
         return pd.DataFrame()
+        
+    # Pre-calculate all site-specific data that should persist
+    for idx, row in filtered_df.iterrows():
+        # Calculate CAPEX and OPEX estimates
+        capex_data = calculate_capex_estimate(row.to_dict())
+        opex_data = calculate_opex_estimate(row.to_dict())
+        
+        # Get tower recommendations
+        tower_data = get_tower_recommendations(row.to_dict())
+        
+        # Get installation checklist
+        checklist = get_installation_checklist(row.to_dict(), tower_data['recommendations'][0]['tower_type'])
+        
+        # Calculate building height and recommended tower height
+        avg_building_height = 24.0  # Default value for urban areas
+        if row['Terrain'] == 'Rural':
+            avg_building_height = 12.0
+        elif row['Terrain'] == 'Semi-urban':
+            avg_building_height = 18.0
+        elif row['Terrain'] == 'Hilly':
+            avg_building_height = 15.0
+        
+        # Recommended tower height is typically 5m above average building height
+        recommended_tower_height = avg_building_height + 5.0
+        
+        # Store all calculated data
+        filtered_df.at[idx, 'capex_data'] = str(capex_data)
+        filtered_df.at[idx, 'opex_data'] = str(opex_data)
+        filtered_df.at[idx, 'tower_recommendations'] = str(tower_data)
+        filtered_df.at[idx, 'installation_checklist'] = str(checklist)
+        filtered_df.at[idx, 'avg_building_height'] = avg_building_height
+        filtered_df.at[idx, 'recommended_tower_height'] = recommended_tower_height
     
     # Calculate enhanced score incorporating population density
     # Assume standard coverage radius and capacity parameters
@@ -116,7 +148,7 @@ def get_top_sites(df, subdistrict=None, n=10, min_distance=3.0):
     if len(top_sites) < n and len(filtered_df) < n:
         print(f"Warning: Only found {len(top_sites)} valid sites after water filtering")
     
-    print(f"Returning {len(top_sites)} sites")  # Debug line
+    print(f"Returning {len(top_sites)} sites with persistent calculations")  # Debug line
     return top_sites
 
 def get_metrics_summary(df):
