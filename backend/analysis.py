@@ -26,8 +26,6 @@ def tower_score(PD, RA, CP):
     RA (float): Coverage Radius (km)
     CP (float): Capacity Parameter (maximum number of users the tower can serve)
     
-    Returns:
-    float: Score between 0 and 100
     """
     EP = PD * (math.pi * RA ** 2)  # Estimated Population in coverage area
     UR = EP / CP  # Utilization Ratio
