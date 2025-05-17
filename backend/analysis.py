@@ -14,6 +14,7 @@ import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 from data_generator import generate_site_data
 
+# Calculate real-world distance using haversine formula
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6371
 
@@ -29,6 +30,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 import math
 
+# Score each tower site based on projected utilization
 def tower_score(PD, RA, CP):
     """
     Calculate tower score based on population density, coverage radius, and capacity parameters.
@@ -51,6 +53,7 @@ def tower_score(PD, RA, CP):
     
     return max(0, min(100, round(score, 2)))
 
+# Main function to retrieve top n suitable sites after scoring and filtering
 def get_top_sites(df, subdistrict=None, n=10, min_distance=3.0):
     print(f"Received request for {n} sites in {subdistrict}")  # Debug line
     
