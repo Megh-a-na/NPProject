@@ -1,3 +1,8 @@
+"""
+Data generation module for simulating 5G tower site conditions.
+Includes scoring based on AQI, distance, accessibility, and environmental interference.
+"""
+
 import numpy as np
 import pandas as pd
 import os 
@@ -5,8 +10,12 @@ import os
 DATA_FILE = 'site_data.csv'
 
 def generate_site_data(num_sites=100):
+    """
+    Simulates environmental and demographic data for multiple tower sites.
+    Returns a DataFrame with computed suitability scores.
+    """
     np.random.seed(42)
-
+    # Define subdistricts with base lat/lon values for site placement
     subdistricts = {
         'Whitefield': {'district': 'Bangalore Urban', 'lat': 12.97, 'lon': 77.73},
         'Andheri': {'district': 'Mumbai Suburban', 'lat': 19.11, 'lon': 72.87},
@@ -43,7 +52,7 @@ def generate_site_data(num_sites=100):
         'Colaba': {'district': 'Mumbai City', 'lat': 18.9180, 'lon': 72.8323}
     }
 
-    
+    # Base population density per subdistrict, used to generate simulated values
     population_density_base = {
         'Whitefield': 12000,
         'Andheri': 25000,
@@ -133,3 +142,9 @@ def generate_site_data(num_sites=100):
     )
 
     return df
+
+
+if __name__ == "__main__":
+    df = generate_site_data(100)
+    print(df.head())
+
