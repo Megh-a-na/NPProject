@@ -78,7 +78,7 @@ We focused on building a practical MVP (Minimum Viable Product) for end users li
 
 ### Frontend
 - **React + Vite**
-- **TypeScript**
+- **JavaScript**
 - **Mapbox GL JS** (for map rendering)
 
 ### Backend
