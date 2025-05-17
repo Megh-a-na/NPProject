@@ -9,6 +9,7 @@ import os
 
 DATA_FILE = 'site_data.csv'
 
+#Generate realistic data for analysis of different sites
 def generate_site_data(num_sites=100):
     """
     Simulates environmental and demographic data for multiple tower sites.
@@ -103,7 +104,7 @@ def generate_site_data(num_sites=100):
             base_density = population_density_base[subdistrict]
             density = np.random.normal(base_density, base_density * 0.1)  # ±10%
 
-            site = {
+            site_data = {
                 'District': info['district'],
                 'Subdistrict': subdistrict,
                 'Site_ID': f"{subdistrict[:3].upper()}{np.random.randint(1000, 9999)}",
@@ -117,7 +118,7 @@ def generate_site_data(num_sites=100):
                 'Environmental_Interference': np.random.randint(1, 11),
                 'Population_Density': round(density)
             }
-            data.append(site)
+            data.append(site_data)
 
 
     df = pd.DataFrame(data)
