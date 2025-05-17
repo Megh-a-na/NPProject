@@ -1,3 +1,15 @@
+"""
+Tower site analysis module for 5G deployment planning.
+
+Includes: 
+- Haversine distance calculation
+- Population-based scoring
+- CAPEX/OPEX estimation
+- Tower type recommendations
+- Installation checklist generation
+"""
+
+
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 from data_generator import generate_site_data
