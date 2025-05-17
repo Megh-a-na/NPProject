@@ -95,11 +95,32 @@ We focused on building a practical MVP (Minimum Viable Product) for end users li
 ---
 ## Screenshots
 
+### 1. Login Page
 ![image](https://github.com/user-attachments/assets/7b96b60c-2ae1-4c8b-a8d0-25724b6451a4)
+
+### 2. Location & Tower Selection  
+_Enter your target area and number of towers._ 
+
 ![image](https://github.com/user-attachments/assets/5158afbb-c93f-4a8f-8e57-1c86813c0b25)
+
+### 3. Map with Recommended Tower Placements  
+_After selection, see pins for each optimal site._ 
+
 ![image](https://github.com/user-attachments/assets/e2eab24b-8371-4e77-8e8c-4d5115585598)
-![image](https://github.com/user-attachments/assets/6a037535-7d8b-4bd3-8243-e0712915652c)
+
+### 4. Site Profile & Optimization Details  
+_Land use, population density, recommended tower height, etc._ 
+
+![image](https://github.com/user-attachments/assets/6a037535-7d8b-4bd3-8243-e0712915652c) 
+
+### 5. Cost Analysis Panel  
+_Breakdown of CAPEX, OPEX, and first‑year total._ 
+
 ![image](https://github.com/user-attachments/assets/1cb8eb34-f35b-4e6b-a9c6-6a3282055def)
+
+### 6. Generated Deployment Report  
+_Comprehensive PDF with coordinates, scores, and cost summary._
+
 ![image](https://github.com/user-attachments/assets/38d30b8f-52cc-457b-94ef-ea3371d13670)
 
 ---
