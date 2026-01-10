@@ -21,7 +21,7 @@ We focused on building a practical MVP (Minimum Viable Product) for end users li
 
 ---
 
-## 🎯 Core Features
+## Core Features
 
 ### 1. Smart Tower Placement Using Haversine Formula
 - Users input a **location** and specify the **number of towers**.
@@ -66,7 +66,7 @@ We focused on building a practical MVP (Minimum Viable Product) for end users li
 
 ---
 
-## 💡 Use Cases
+## Use Cases
 - **Site survey simulation** before expensive field operations.
 - **Training module** for new field engineers.
 - **Data-informed installation planning** for telecom service providers.
@@ -74,7 +74,7 @@ We focused on building a practical MVP (Minimum Viable Product) for end users li
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React + Vite**
@@ -125,7 +125,7 @@ _Comprehensive PDF with coordinates, scores, and cost summary._
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 project-root/
@@ -148,7 +148,7 @@ project-root/
 
 ---
 
-## 🔮 Future Scope
+## Future Scope
 
 - Real-time GIS data integration
 - Terrain and obstruction layer modeling
